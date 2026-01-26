@@ -1,44 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 
 export const Login = () => {
-  const { loginGoogle, session, loading } = useAuth();
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  // Verifica se o Supabase devolveu algum erro na URL (ex: bloqueio do gatilho)
-  useEffect(() => {
-    // Pega os parâmetros da URL (onde o Supabase manda os erros)
-    const hash = window.location.hash;
-    const search = window.location.search;
-    
-    // Procura por 'error_description' na URL
-    const params = new URLSearchParams(hash.includes('?') ? hash.split('?')[1] : hash.substring(1));
-    const urlParams = new URLSearchParams(search);
-    
-    // Tenta pegar o erro de qualquer lugar da URL
-    const errorDesc = params.get('error_description') || urlParams.get('error_description');
-
-    if (errorDesc) {
-      // Decodifica a mensagem (tira os %20) e define o erro
-      // O replace é para limpar o '+' que às vezes vem no lugar de espaço
-      setErrorMessage(decodeURIComponent(errorDesc).replace(/\+/g, ' '));
-    }
-  }, []);
+  // Agora pegamos o authError direto do contexto!
+  const { loginGoogle, session, loading, authError } = useAuth();
 
   if (!loading && session) {
     return <Navigate to="/" replace />;
   }
-
-  const handleLogin = async () => {
-    setErrorMessage(null); // Limpa erro antigo ao tentar de novo
-    try {
-      await loginGoogle();
-    } catch (error) {
-      console.error("Erro no login:", error);
-      setErrorMessage("Não foi possível conectar ao Google.");
-    }
-  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -51,17 +21,17 @@ export const Login = () => {
         <h1 className="text-2xl font-black text-slate-800 mb-2">Acesso Restrito</h1>
         <p className="text-slate-500 mb-6 text-sm">Faça login com sua conta corporativa para acessar o BR Desk.</p>
 
-        {/* ALERTA DE ERRO (Só aparece se tiver erro) */}
-        {errorMessage && (
-          <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm text-left rounded shadow-sm animate-pulse">
-            <p className="font-bold mb-1">Acesso Negado</p>
-            <p>{errorMessage}</p>
+        {/* --- BOX DE ERRO VINDO DO CONTEXTO --- */}
+        {authError && (
+          <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm text-left rounded shadow-sm">
+            <p className="font-bold flex items-center gap-2">🚫 Acesso Negado</p>
+            <p className="mt-1">{authError}</p>
           </div>
         )}
         
         <button 
           type="button"
-          onClick={handleLogin}
+          onClick={loginGoogle}
           className="w-full flex items-center justify-center gap-3 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold py-3 px-4 rounded-xl transition-all shadow-sm hover:shadow-md cursor-pointer"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

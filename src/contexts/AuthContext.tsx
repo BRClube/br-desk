@@ -1,8 +1,8 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import { supabase } from '../services/supabaseClient'; // Aquele arquivo que criamos antes
+import { supabase } from '../services/supabaseClient';
 import { Session } from '@supabase/supabase-js';
 
-// Define o formato do nosso Perfil (igual ao banco)
+// Define o formato do nosso Perfil
 interface UserProfile {
   id: string;
   email: string;
@@ -17,6 +17,7 @@ interface AuthContextType {
   profile: UserProfile | null;
   loading: boolean;
   isAdmin: boolean;
+  authError: string | null; // <--- NOVA VARIÁVEL GLOBAL DE ERRO
   canAccess: (module: string) => boolean;
   loginGoogle: () => Promise<void>;
   logout: () => Promise<void>;
@@ -28,16 +29,39 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null); // Estado para o erro
 
   useEffect(() => {
-    // 1. Verifica se já tem sessão ativa ao abrir o site
+    // --- 1. CAPTURA O ERRO DA URL ANTES QUE O SUPABASE LIMPE ---
+    const captureUrlError = () => {
+      const url = window.location.href;
+      // Procura por error_description na URL (hash ou query)
+      const match = url.match(/error_description=([^&]+)/);
+      
+      if (match && match[1]) {
+        const rawError = decodeURIComponent(match[1].replace(/\+/g, ' '));
+        console.log("⚠️ AuthContext capturou erro:", rawError);
+
+        // Traduz o erro técnico
+        if (rawError.includes("Database error") || rawError.includes("row-level security")) {
+          setAuthError("Acesso Negado: Apenas para uso autorizado");
+        } else {
+          setAuthError(rawError);
+        }
+      }
+    };
+    
+    captureUrlError();
+    // -----------------------------------------------------------
+
+    // 2. Verifica sessão ativa
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session?.user) fetchProfile(session.user.id);
       else setLoading(false);
     });
 
-    // 2. Escuta mudanças (Login, Logout, Token expirado)
+    // 3. Escuta mudanças
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (session?.user) fetchProfile(session.user.id);
@@ -50,7 +74,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Busca os dados extras (role, permissões) na tabela 'profiles'
   const fetchProfile = async (userId: string) => {
     try {
       const { data, error } = await supabase
@@ -69,42 +92,37 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const loginGoogle = async () => {
-    // Pega a URL base correta (incluindo /br-desk/)
-    // Em desenvolvimento (localhost) ele pega a raiz, em produção pega o subdiretório
-    const redirectUrl = window.location.origin + import.meta.env.BASE_URL;
-
-    // Remove barras duplicadas no final, se houver, para evitar erros
+    setAuthError(null); // Limpa erro antigo ao tentar novo login
+    const redirectUrl = window.location.origin + (import.meta.env.BASE_URL === '/' ? '' : import.meta.env.BASE_URL);
     const finalRedirect = redirectUrl.endsWith('/') ? redirectUrl.slice(0, -1) : redirectUrl;
 
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: finalRedirect, 
-        queryParams: {
-          access_type: 'offline',
-          prompt: 'consent',
-        }
+        queryParams: { access_type: 'offline', prompt: 'consent' }
       }
     });
   };
+
   const logout = async () => {
     await supabase.auth.signOut();
     setProfile(null);
     setSession(null);
+    setAuthError(null);
   };
 
-  // Funções úteis para usar no front
   const isAdmin = profile?.role === 'admin';
   
   const canAccess = (module: string) => {
     if (!profile) return false;
-    if (profile.role === 'admin') return true; // Admin acessa tudo
-    if (profile.role === 'pendente') return false; // Pendente não acessa nada
+    if (profile.role === 'admin') return true;
+    if (profile.role === 'pendente') return false;
     return profile.allowed_modules?.includes(module);
   };
 
   return (
-    <AuthContext.Provider value={{ session, profile, loading, loginGoogle, logout, isAdmin, canAccess }}>
+    <AuthContext.Provider value={{ session, profile, loading, loginGoogle, logout, isAdmin, canAccess, authError }}>
       {children}
     </AuthContext.Provider>
   );
