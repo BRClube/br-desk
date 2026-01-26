@@ -275,7 +275,7 @@ const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
 // --- 3. APP PRINCIPAL (O novo envelope com Rotas) ---
 const App = () => {
   return (
-    <BrowserRouter basename='/br-desk'>
+    <BrowserRouter basename='import.meta.env.BASE_URL'>
       <AuthProvider>
         <Routes>
           {/* Rota Pública */}

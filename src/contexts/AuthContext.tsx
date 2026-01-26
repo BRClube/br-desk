@@ -69,19 +69,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const loginGoogle = async () => {
+    // Pega a URL base correta (incluindo /br-desk/)
+    // Em desenvolvimento (localhost) ele pega a raiz, em produção pega o subdiretório
+    const redirectUrl = window.location.origin + import.meta.env.BASE_URL;
+
+    // Remove barras duplicadas no final, se houver, para evitar erros
+    const finalRedirect = redirectUrl.endsWith('/') ? redirectUrl.slice(0, -1) : redirectUrl;
+
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin, // Volta para a raiz
+        redirectTo: finalRedirect, 
         queryParams: {
           access_type: 'offline',
           prompt: 'consent',
-          // hd: 'brclube.org' // <--- DESCOMENTE QUANDO FOR PARA PRODUÇÃO
         }
       }
     });
   };
-
   const logout = async () => {
     await supabase.auth.signOut();
     setProfile(null);
