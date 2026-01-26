@@ -6,12 +6,23 @@ import { Login } from './pages/Login';
 import { DepartmentId, FormSubmissionStatus, Submodule, Template } from '../types';
 import { DEPARTMENTS } from './constants';
 import { Input, Select, TextArea, FormCard, SuccessMessage, FormMirror, RepeaterField } from './components/FormComponents';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import { AdminUserList } from './components/AdminUserList'; // <--- IMPORTADO AQUI
+import { checkPermission } from './utils/permissions';
+import { RoleManager } from './components/RoleManager';
 
-// --- 1. COMPONENTE DASHBOARD (O seu antigo App) ---
-// Toda a lógica do formulário e navegação interna fica aqui
+// --- 1. COMPONENTE DASHBOARD ---
 const Dashboard: React.FC = () => {
-  const { logout, profile } = useAuth(); // Pegamos logout e profile para usar se precisar
-  
+  const { logout, profile, isAdmin } = useAuth(); // <--- PEGAMOS O ISADMIN
+  const visibleDepartments = DEPARTMENTS.filter(dept => 
+    checkPermission(profile?.allowed_modules, dept.id)
+  );
+
+
+  // State para controlar o Modal de Admin
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
+  const [showRoleManager, setShowRoleManager] = useState(false);
+
   // States originais
   const [activeDept, setActiveDept] = useState<DepartmentId>('home');
   const [activeSubmodule, setActiveSubmodule] = useState<string | null>(null);
@@ -99,13 +110,19 @@ const Dashboard: React.FC = () => {
   // Renderizadores (Home, Fields, etc)
   const renderHome = () => (
     <div className="space-y-12 animate-in fade-in duration-1000">
+      
+      {/* Header da Home */}
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 pb-4">
         <div className="max-w-2xl">
           <div className="flex items-center space-x-3 text-cyan-500 font-black text-xs uppercase tracking-[0.3em] mb-4">
              <span className="w-12 h-[3px] bg-cyan-500 rounded-full"></span>
              <span>BR Desk</span>
           </div>
-          <img src="/images/logo.png" alt="BR Clube Logo" className="w-44 h-auto mb-4 rounded-lg" />
+          {/* Tentei usar a imagem do logo, se não tiver usa texto */}
+          <div className="mb-4">
+             <span className="text-4xl font-extrabold text-slate-800">BR</span>
+             <span className="text-4xl font-extrabold text-cyan-600">clube</span>
+          </div>
           <p className="text-slate-500 text-xl font-medium leading-relaxed">
             Olá, <strong>{profile?.full_name || 'Colaborador'}</strong>. Bem-vindo ao hub de utilitários.
           </p>
@@ -115,8 +132,52 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
+      {/* --- ÁREA DO ADMIN ATUALIZADA --- */}
+      {isAdmin && (
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+           <div className="flex items-center gap-2 mb-4">
+             <i className="fa-solid fa-lock text-purple-500 text-xs"></i>
+             <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest">Painel Administrativo</h2>
+           </div>
+           
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              
+              {/* BOTÃO 1: Gestão de Usuários (Já existia) */}
+              <button 
+                onClick={() => setShowAdminPanel(true)}
+                className="bg-white p-6 rounded-2xl border border-purple-100 shadow-[0_4px_20px_rgba(147,51,234,0.05)] hover:shadow-[0_10px_30px_rgba(147,51,234,0.1)] hover:-translate-y-1 transition-all text-left flex items-center gap-4 group"
+              >
+                 <div className="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                   <i className="fa-solid fa-users-gear text-xl"></i>
+                 </div>
+                 <div>
+                    <h3 className="font-bold text-slate-800 group-hover:text-purple-600 transition-colors">Gestão de Usuários</h3>
+                    <p className="text-xs text-slate-500 font-medium mt-1">Definir cargos da equipe</p>
+                 </div>
+              </button>
+
+              {/* BOTÃO 2: Gestão de Cargos (NOVO) */}
+              <button 
+                onClick={() => setShowRoleManager(true)}
+                className="bg-white p-6 rounded-2xl border border-purple-100 shadow-[0_4px_20px_rgba(147,51,234,0.05)] hover:shadow-[0_10px_30px_rgba(147,51,234,0.1)] hover:-translate-y-1 transition-all text-left flex items-center gap-4 group"
+              >
+                 <div className="w-12 h-12 bg-purple-50 text-purple-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                   <i className="fa-solid fa-shield-halved text-xl"></i>
+                 </div>
+                 <div>
+                    <h3 className="font-bold text-slate-800 group-hover:text-purple-600 transition-colors">Cargos e Permissões</h3>
+                    <p className="text-xs text-slate-500 font-medium mt-1">Criar perfis de acesso</p>
+                 </div>
+              </button>
+
+           </div>
+        </div>
+      )}
+      {/* ------------------------------- */}
+
+      {/* Grid de Departamentos (Original) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-        {DEPARTMENTS.map((dept) => (
+        {visibleDepartments.map((dept) => (
           <button 
             key={dept.id}
             onClick={() => handleNavigate(dept.id, null)}
@@ -154,134 +215,107 @@ const Dashboard: React.FC = () => {
   const currentDeptObj = DEPARTMENTS.find(d => d.id === activeDept);
 
   return (
-    <Layout activeDept={activeDept} activeSubmodule={activeSubmodule} onNavigate={handleNavigate}>
-      {activeDept === 'home' ? (
-        renderHome()
-      ) : !activeSubmodule ? (
-        <div className="space-y-12">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {currentDeptObj?.submodules.map((sub) => (
-              <button
-                key={sub.id}
-                onClick={() => handleNavigate(activeDept, sub.id)}
-                className="bg-white p-8 rounded-2xl border border-cyan-50 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all text-left group"
-              >
-                <div className="w-12 h-12 bg-cyan-500 text-white rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                   <i className={`fa-solid ${sub.isTerm ? 'fa-file-signature' : currentDeptObj.icon}`}></i>
+    <>
+      <Layout activeDept={activeDept} activeSubmodule={activeSubmodule} onNavigate={handleNavigate}>
+        {activeDept === 'home' ? (
+          renderHome()
+        ) : !activeSubmodule ? (
+          <div className="space-y-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {currentDeptObj?.submodules.map((sub) => (
+                <button
+                  key={sub.id}
+                  onClick={() => handleNavigate(activeDept, sub.id)}
+                  className="bg-white p-8 rounded-2xl border border-cyan-50 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all text-left group"
+                >
+                  <div className="w-12 h-12 bg-cyan-500 text-white rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                     <i className={`fa-solid ${sub.isTerm ? 'fa-file-signature' : currentDeptObj.icon}`}></i>
+                  </div>
+                  <h3 className="text-lg font-black text-slate-800 mb-1">{sub.name}</h3>
+                  <p className="text-xs text-slate-500 font-medium">
+                    {sub.isTerm ? 'Emite documento PDF formal.' : 'Gera mensagem formatada para WhatsApp.'}
+                  </p>
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-8 animate-in fade-in duration-700">
+            {/* ... Conteúdo do Formulário (Mantido igual) ... */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-5">
+                <button 
+                  onClick={() => activeTemplate ? setActiveTemplate(null) : handleNavigate(activeDept, null)} 
+                  className="w-12 h-12 rounded-2xl bg-white border border-cyan-100 flex items-center justify-center text-slate-400 hover:text-cyan-600 shadow-sm transition-all hover:shadow-xl"
+                >
+                  <i className="fa-solid fa-arrow-left"></i>
+                </button>
+                <div>
+                  <h1 className="text-3xl font-[1000] text-slate-900">
+                    {activeTemplate ? activeTemplate.title : currentSub?.name}
+                  </h1>
+                  <p className="text-xs font-bold text-cyan-600 uppercase tracking-widest mt-1">
+                    {currentSub?.isTerm ? 'Documento PDF' : 'Mensagem Digital'}
+                  </p>
                 </div>
-                <h3 className="text-lg font-black text-slate-800 mb-1">{sub.name}</h3>
-                <p className="text-xs text-slate-500 font-medium">
-                  {sub.isTerm ? 'Emite documento PDF formal.' : 'Gera mensagem formatada para WhatsApp.'}
-                </p>
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div className="space-y-8 animate-in fade-in duration-700">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-5">
-              <button 
-                onClick={() => activeTemplate ? setActiveTemplate(null) : handleNavigate(activeDept, null)} 
-                className="w-12 h-12 rounded-2xl bg-white border border-cyan-100 flex items-center justify-center text-slate-400 hover:text-cyan-600 shadow-sm transition-all hover:shadow-xl"
-              >
-                <i className="fa-solid fa-arrow-left"></i>
-              </button>
-              <div>
-                <h1 className="text-3xl font-[1000] text-slate-900">
-                  {activeTemplate ? activeTemplate.title : currentSub?.name}
-                </h1>
-                <p className="text-xs font-bold text-cyan-600 uppercase tracking-widest mt-1">
-                  {currentSub?.isTerm ? 'Documento PDF' : 'Mensagem Digital'}
-                </p>
               </div>
             </div>
+            
+            {status.success ? (
+              <SuccessMessage 
+                message={currentSub?.isTerm ? "Documento preparado com sucesso!" : "Mensagem formatada com sucesso!"} 
+                onReset={() => setStatus({ ...status, success: null })} 
+              />
+            ) : (
+              <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
+                <div className="xl:col-span-7 2xl:col-span-8">
+                  <FormCard title={activeTemplate ? activeTemplate.title : currentSub?.name || ''} icon={currentSub?.isTerm ? 'fa-file-signature' : 'fa-pen-to-square'}>
+                     <form onSubmit={simulateSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {(activeTemplate ? activeTemplate.fields : (currentSub?.fields || [])).map(field => renderField(field))}
+                      <div className="md:col-span-2 flex justify-end">
+                        <button className="btn-primary text-white font-[900] py-4 px-12 rounded-2xl text-sm tracking-widest uppercase">
+                          REVISAR DADOS
+                        </button>
+                      </div>
+                    </form>
+                  </FormCard>
+                </div>
+                <div className="xl:col-span-5 2xl:col-span-4">
+                  <FormMirror 
+                    data={formData} 
+                    title={activeTemplate ? activeTemplate.title : currentSub?.name || ''} 
+                    generateMessage={generateCopyMessage} 
+                    pdfType={currentSub?.pdfType}
+                    isTerm={currentSub?.isTerm || activeTemplate?.isTerm}
+                    isBlank={currentSub?.isBlank}
+                  />
+                </div>
+              </div>
+            )}
           </div>
-          
-          {status.success ? (
-            <SuccessMessage 
-              message={currentSub?.isTerm ? "Documento preparado com sucesso!" : "Mensagem formatada com sucesso!"} 
-              onReset={() => setStatus({ ...status, success: null })} 
-            />
-          ) : (
-            <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
-              <div className="xl:col-span-7 2xl:col-span-8">
-                <FormCard title={activeTemplate ? activeTemplate.title : currentSub?.name || ''} icon={currentSub?.isTerm ? 'fa-file-signature' : 'fa-pen-to-square'}>
-                   <form onSubmit={simulateSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {(activeTemplate ? activeTemplate.fields : (currentSub?.fields || [])).map(field => renderField(field))}
-                    <div className="md:col-span-2 flex justify-end">
-                      <button className="btn-primary text-white font-[900] py-4 px-12 rounded-2xl text-sm tracking-widest uppercase">
-                        REVISAR DADOS
-                      </button>
-                    </div>
-                  </form>
-                </FormCard>
-              </div>
-              <div className="xl:col-span-5 2xl:col-span-4">
-                <FormMirror 
-                  data={formData} 
-                  title={activeTemplate ? activeTemplate.title : currentSub?.name || ''} 
-                  generateMessage={generateCopyMessage} 
-                  pdfType={currentSub?.pdfType}
-                  isTerm={currentSub?.isTerm || activeTemplate?.isTerm}
-                  isBlank={currentSub?.isBlank}
-                />
-              </div>
-            </div>
-          )}
-        </div>
+        )}
+      </Layout>
+
+      {/* --- RENDERIZAÇÃO CONDICIONAL DO MODAL FORA DO LAYOUT --- */}
+      {showAdminPanel && (
+        <AdminUserList onClose={() => setShowAdminPanel(false)} />
       )}
-    </Layout>
+
+      {/* NOVO MODAL AQUI */}
+      {showRoleManager && (
+        <RoleManager onClose={() => setShowRoleManager(false)} />
+      )}
+    </>
   );
 };
 
-
-// --- 2. COMPONENTE GUARDIÃO (Protege a rota) ---
-const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
-  const { session, profile, loading } = useAuth();
-
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-slate-500 font-bold">Carregando sistema...</div>;
-
-  // Se não estiver logado, manda pro Login
-  if (!session) {
-    return <Navigate to="/login" replace />;
-  }
-
-  // Se estiver logado mas "Pendente"
-  if (profile?.role === 'pendente') {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-6 text-center">
-        <div className="w-16 h-16 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center mb-6">
-            <i className="fa-solid fa-clock text-2xl"></i>
-        </div>
-        <h1 className="text-2xl font-black text-slate-800 mb-2">Acesso Pendente</h1>
-        <p className="text-slate-500 mb-6 max-w-md">
-            Olá, <strong>{session.user.email}</strong>. Seu cadastro foi criado mas ainda aguarda liberação do administrador.
-        </p>
-        <button 
-            onClick={() => window.location.reload()} 
-            className="px-6 py-3 bg-cyan-600 text-white font-bold rounded-xl hover:bg-cyan-700 transition-colors"
-        >
-            Verificar novamente
-        </button>
-      </div>
-    );
-  }
-
-  // Se estiver tudo certo, renderiza o Dashboard
-  return children;
-};
-
-// --- 3. APP PRINCIPAL (O novo envelope com Rotas) ---
+// --- 3. APP PRINCIPAL ---
 const App = () => {
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL}>
       <AuthProvider>
         <Routes>
-          {/* Rota Pública */}
           <Route path="/login" element={<Login />} />
-
-          {/* Rota Privada (Qualquer outra URL leva ao Dashboard Protegido) */}
           <Route path="/*" element={
             <ProtectedRoute>
               <Dashboard />

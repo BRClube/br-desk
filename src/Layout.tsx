@@ -2,6 +2,8 @@
 import React, { useState } from 'react';
 import { DepartmentId, Department, Submodule, UsefulLink } from './../types';
 import { DEPARTMENTS, USEFUL_LINKS } from './constants';
+import { useAuth } from './contexts/AuthContext';
+import { checkPermission } from './utils/permissions';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -15,6 +17,11 @@ const Layout: React.FC<LayoutProps> = ({ children, activeDept, activeSubmodule, 
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isLinksExpanded, setIsLinksExpanded] = useState(false);
   const [expandedDept, setExpandedDept] = useState<DepartmentId | null>(activeDept !== 'home' ? activeDept : null);
+  const { profile } = useAuth();
+
+  const visibleDepartments = DEPARTMENTS.filter(dept => 
+    checkPermission(profile?.allowed_modules, dept.id)
+  );
 
   const toggleDept = (id: DepartmentId) => {
     if (isCollapsed) setIsCollapsed(false);
@@ -115,7 +122,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeDept, activeSubmodule, 
           
           {!isCollapsed && <div className="pt-6 pb-2 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Departamentos</div>}
           
-          {DEPARTMENTS.map((dept) => {
+          {visibleDepartments.map((dept) => {
             const isExpanded = expandedDept === dept.id;
             const isActive = activeDept === dept.id;
 
@@ -187,7 +194,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeDept, activeSubmodule, 
                 ))}
              </div>
 
-             {DEPARTMENTS.map(dept => (
+             {visibleDepartments.map(dept => (
                <div key={dept.id} className="space-y-2">
                  <div className="px-4 text-[10px] font-black text-cyan-500 uppercase tracking-widest pt-4">{dept.name}</div>
                  {dept.submodules.map(sub => (

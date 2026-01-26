@@ -3,18 +3,19 @@ import { supabase } from '../services/supabaseClient';
 import { Session } from '@supabase/supabase-js';
 
 // Define o formato do nosso Perfil
-interface UserProfile {
+interface Profile {
   id: string;
   email: string;
-  role: 'admin' | 'user' | 'pendente';
-  allowed_modules: string[];
   full_name: string;
   avatar_url?: string;
+  role: 'admin' | 'user' | 'pendente';
+  allowed_modules?: string[]; // <--- NOVO CAMPO
+  role_id?: string; // <--- NOVO CAMPO
 }
 
 interface AuthContextType {
   session: Session | null;
-  profile: UserProfile | null;
+  profile: Profile | null;
   loading: boolean;
   isAdmin: boolean;
   authError: string | null; // <--- NOVA VARIÁVEL GLOBAL DE ERRO
@@ -75,21 +76,35 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const fetchProfile = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-      
-      if (error) console.error('Erro ao buscar perfil:', error);
-      setProfile(data);
-    } catch (error) {
-      console.error('Erro crítico:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    // Fazemos um JOIN para pegar os dados do cargo (app_roles)
+    const { data, error } = await supabase
+      .from('profiles')
+      .select(`
+        *,
+        app_roles (
+          modules
+        )
+      `)
+      .eq('id', userId)
+      .single();
+
+    if (error) throw error;
+
+    // Achatamos o resultado para facilitar
+    const userProfile = {
+      ...data,
+      // Se for admin, damos permissão '*', senão pegamos do banco
+      allowed_modules: data.role === 'admin' ? ['*'] : data.app_roles?.modules || []
+    };
+
+    setProfile(userProfile);
+  } catch (error) {
+    console.error(error);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const loginGoogle = async () => {
     setAuthError(null); // Limpa erro antigo ao tentar novo login
