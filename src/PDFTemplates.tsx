@@ -4,6 +4,7 @@ import { textAlign } from 'html2canvas/dist/types/css/property-descriptors/text-
 import header from './assets/header.png'
 import footer from './assets/footer.png'
 import assinatura from './assets/assinatura.png'
+import { formatDateTime } from './utils/Formatters';
 // --- 1. ESTILOS (Ajustados para os nomes que você usou no código) ---
 const styles = StyleSheet.create({
   page: {
@@ -443,7 +444,7 @@ export const TermoAcordoAmparoPDF = ({data}: {data: any}) =>{
 export const TermoRecebimentoRastreadorPDF = ({data }: {data: any }) => {
 
     const dt_hoje = formatDate(data.data_hoje);
-
+    
   return (
     <Document>
       <BaseLayout>

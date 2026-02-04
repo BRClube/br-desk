@@ -1,5 +1,5 @@
 import { Department, Template, DepartmentId, UsefulLink } from '../types';
-
+import { formatDateTime } from './utils/Formatters';
 // --- HELPER PARA FORMATAR DATAS (Adicionado) ---
 function formatarData(valor: any): string {
   if (!valor) return '';
@@ -1103,7 +1103,7 @@ Central de Agendamento\n
             { value: 'desinstalacao', label: 'Desinstalação'},
             { value: 'manutencao', label: 'Manutenção'}
           ]},
-          { id: 'protocolo', label: 'Protocolo'},
+          //{ id: 'protocolo', label: 'Protocolo'},
           { id: 'nome', label: 'Nome Completo'},
           { id: 'cpf_cnpj', label: 'CPF/CNPJ'},
           { id: 'data_nasc', label: 'Data de Nascimento', type: 'date'},
@@ -1126,6 +1126,7 @@ Central de Agendamento\n
           { id: 'tecnico', label: 'Técnico'}
         ],
         messageTemplate: (data : any) => {
+          const dt_hr = formatDateTime(data.data_horario);
           const dtNasc = formatarData(data.data_nasc);
           const tipos: Record<string, string> = {
             'instalacao' : 'INSTALAÇÃO',
@@ -1167,7 +1168,7 @@ Central de Agendamento\n
 
 *Endereço:* ${data.endereco}
 
-*Data:* ${data.data_horario}
+*Data:* ${dt_hr}
 
 *Técnico:* ${data.tecnico}
           `

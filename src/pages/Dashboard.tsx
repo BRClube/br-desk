@@ -5,7 +5,7 @@ import { DepartmentId, FormSubmissionStatus, Submodule, Template } from '../../t
 import { DEPARTMENTS } from '../constants';
 import { Input, Select, TextArea, FormCard, SuccessMessage, FormMirror, RepeaterField } from '../components/FormComponents';
 import { checkPermission } from '../utils/permissions';
-
+import { formatDateTime } from '../utils/Formatters';
 // --- CONFIGURAÇÕES SENSÍVEIS (Agora ficam protegidas pelo Lazy Loading) ---
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz27OajWuPo27GkycSofDwbvbc9IKA6MeCgdjzbprXcQ82Uvl9EpnxgPqRo4fAcfsqoPg/exec";
 const API_TOKEN = "brclube-2026"; // Token de segurança que definimos
@@ -93,9 +93,28 @@ const Dashboard: React.FC = () => {
 
     const processedData = { ...formData };
     let message = templateContent;
+
+    // Lista dos IDs dos campos que são datas e precisam de formatação
+    const dateFields = [
+        'data-hora', 
+        'hora_solicitacao', 
+        'hora_autorizacao', 
+        'hora_prestador', 
+        'chegada_prestador', 
+        'encerramento_atendimento'
+    ];
+
     Object.entries(processedData).forEach(([key, value]) => {
-      message = message.replace(new RegExp(`{{${key}}}`, 'g'), (value as string) || `[${key}]`);
+      let finalValue = (value as string) || `[${key}]`;
+
+      // Se o campo for uma data, formata antes de substituir
+      if (dateFields.includes(key) && value) {
+          finalValue = formatDateTime(value as string);
+      }
+
+      message = message.replace(new RegExp(`{{${key}}}`, 'g'), finalValue);
     });
+    
     return message;
   };
 
