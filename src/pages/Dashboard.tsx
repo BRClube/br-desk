@@ -1,156 +1,289 @@
-import React from 'react';
+import React, { useState } from 'react';
+import Layout from '../Layout';
 import { useAuth } from '../contexts/AuthContext';
-import { useState } from 'react';
-import { AdminUserList } from '../components/AdminUserList';
+import { DepartmentId, FormSubmissionStatus, Submodule, Template } from '../../types'; // Ajuste o caminho '../types' se necessário
+import { DEPARTMENTS } from '../constants';
+import { Input, Select, TextArea, FormCard, SuccessMessage, FormMirror, RepeaterField } from '../components/FormComponents';
+import { checkPermission } from '../utils/permissions';
 
-export const Dashboard = () => {
-  const { profile, logout, isAdmin } = useAuth();
-  const [showAdminPanel, setShowAdminPanel] = useState(false);
+// --- CONFIGURAÇÕES SENSÍVEIS (Agora ficam protegidas pelo Lazy Loading) ---
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz27OajWuPo27GkycSofDwbvbc9IKA6MeCgdjzbprXcQ82Uvl9EpnxgPqRo4fAcfsqoPg/exec";
+const API_TOKEN = "brclube-2026"; // Token de segurança que definimos
+
+const Dashboard: React.FC = () => {
+  const { logout, profile } = useAuth();
   
-  return (
-    <div className="min-h-screen bg-slate-50">
-      
-      {/* --- BARRA SUPERIOR (HEADER) --- */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-10 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            
-            {/* Logo e Título */}
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-cyan-600 rounded-lg flex items-center justify-center text-white font-bold shadow-sm">
-                BR
-              </div>
-              <span className="font-bold text-slate-700 text-lg">BR Desk</span>
-            </div>
+  const visibleDepartments = DEPARTMENTS.filter(dept => 
+    checkPermission(profile?.allowed_modules, dept.id)
+  );
 
-            {/* Menu do Usuário */}
-            <div className="flex items-center gap-4">
-              <div className="text-right hidden sm:block">
-                <p className="text-sm font-bold text-slate-700">{profile?.full_name}</p>
-                <p className="text-xs text-slate-500 uppercase tracking-wide">
-                  {profile?.role === 'admin' ? 'Administrador' : 'Colaborador'}
+  const [activeDept, setActiveDept] = useState<DepartmentId>('home');
+  const [activeSubmodule, setActiveSubmodule] = useState<string | null>(null);
+  const [activeTemplate, setActiveTemplate] = useState<Template | null>(null);
+  const [status, setStatus] = useState<FormSubmissionStatus>({ submitting: false, success: null, error: null });
+  const [formData, setFormData] = useState<Record<string, any>>({});
+
+  const handleNavigate = (deptId: DepartmentId, submoduleId: string | null) => {
+    setActiveDept(deptId);
+    setActiveSubmodule(submoduleId);
+    setActiveTemplate(null);
+    setStatus({ submitting: false, success: null, error: null });
+    setFormData({});
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const getAllSubmodules = (): Submodule[] => {
+    const subs: Submodule[] = [];
+    DEPARTMENTS.forEach(d => {
+      subs.push(...d.submodules);
+      d.groups?.forEach(g => subs.push(...g.items));
+    });
+    return subs;
+  };
+
+  const currentSub = getAllSubmodules().find(s => s.id === activeSubmodule);
+  const isTerm = currentSub?.isTerm || activeTemplate?.isTerm;
+  const isBlank = currentSub?.isBlank;
+
+  // --- LÓGICA DO REGISTRO (GOOGLE SHEETS) ---
+  const isFormularioIntegrado = activeSubmodule === 'abertura_assistencia' || activeSubmodule === 'fechamento_assistencia';
+
+  const handleRegister = async () => {
+    if (!window.confirm("Confirma o registro desses dados no sistema?")) return;
+
+    setStatus({ submitting: true, success: null, error: null });
+
+    const payload = {
+      ...formData,
+      form_id: activeSubmodule,
+      user_email: profile?.email,
+      token_acesso: API_TOKEN // <--- TOKEN ADICIONADO AQUI
+    };
+
+    try {
+      await fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      alert("Dados enviados para o sistema com sucesso!");
+      setStatus({ submitting: false, success: true, error: null });
+
+    } catch (error) {
+      console.error("Erro:", error);
+      alert("Erro ao conectar com o sistema.");
+      setStatus({ submitting: false, success: null, error: "Erro de conexão" });
+    }
+  };
+
+  const generateCopyMessage = () => {
+    let templateContent = "";
+    if (activeTemplate) { templateContent = activeTemplate.content; } 
+    else if (currentSub?.messageTemplate) { 
+        templateContent = typeof currentSub.messageTemplate === 'function' ? currentSub.messageTemplate(formData) : currentSub.messageTemplate; 
+    } 
+    else { return ""; }
+
+    const processedData = { ...formData };
+    let message = templateContent;
+    Object.entries(processedData).forEach(([key, value]) => {
+      message = message.replace(new RegExp(`{{${key}}}`, 'g'), (value as string) || `[${key}]`);
+    });
+    return message;
+  };
+
+  const renderField = (field: any) => {
+    switch(field.type) {
+      case 'select': return <Select key={field.id} name={field.id} label={field.label} required={field.required} options={field.options || []} value={formData[field.id] || ''} onChange={handleInputChange} />;
+      case 'repeater': return <RepeaterField key={field.id} field={field} value={formData[field.id] || []} onChange={(newArray) => setFormData({...formData, [field.id]: newArray})} />;
+      case 'textarea': return <div key={field.id} className="md:col-span-2"><TextArea name={field.id} label={field.label} placeholder={field.placeholder} required={field.required} value={formData[field.id] || ''} onChange={handleInputChange} />;</div>;
+      default: return <Input key={field.id} name={field.id} label={field.label} placeholder={field.placeholder} type={field.type || 'text'} required={field.required} value={formData[field.id] || ''} onChange={handleInputChange} />;
+    }
+  };
+
+  const handleClearData = () => {
+    if (window.confirm("Tem certeza que deseja limpar todos os campos?")) {
+      setFormData({}); 
+      setStatus({ submitting: false, success: null, error: null });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const renderHome = () => (
+    <div className="space-y-12 animate-in fade-in duration-1000">
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 pb-4">
+        <div className="max-w-2xl">
+          <div className="flex items-center space-x-3 text-cyan-500 font-black text-xs uppercase tracking-[0.3em] mb-4">
+             <span className="w-12 h-[3px] bg-cyan-500 rounded-full"></span>
+             <span>BR Desk</span>
+          </div>
+          <div className="mb-4">
+             <span className="text-4xl font-extrabold text-slate-800">BR</span>
+             <span className="text-4xl font-extrabold text-cyan-600">clube</span>
+          </div>
+          <p className="text-slate-500 text-xl font-medium leading-relaxed">
+            Olá, <strong>{profile?.full_name || 'Colaborador'}</strong>. Selecione um departamento.
+          </p>
+        </div>
+        <div>
+           <button onClick={() => logout()} className="text-red-500 text-sm font-bold hover:underline">Sair do sistema</button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+        {visibleDepartments.map((dept) => (
+          <button 
+            key={dept.id}
+            onClick={() => handleNavigate(dept.id, null)}
+            className="group relative bg-white py-8 px-10 rounded-[32px] border border-cyan-100 shadow-[0_20px_50px_rgba(6,182,212,0.05)] transition-all duration-500 text-center animate-in fade-in slide-in-from-bottom-8 flex flex-col items-center hover:-translate-y-3 hover:shadow-[0_30px_60px_rgba(6,182,212,0.1)] overflow-hidden"
+          >
+            <div className={`absolute top-0 left-0 right-0 h-1.5 ${dept.colorClass}`}></div>
+            <div className={`w-16 h-16 bg-slate-50 group-hover:${dept.colorClass} group-hover:text-white rounded-[20px] flex items-center justify-center mb-6 transition-all duration-500 shadow-inner group-hover:shadow-2xl`}>
+              <i className={`fa-solid ${dept.icon} text-2xl`}></i>
+            </div>
+            <h3 className="text-xl font-[900] text-slate-800 group-hover:text-cyan-600 transition-colors tracking-tight mb-3">
+              {dept.name}
+            </h3>
+            <p className="text-slate-600 text-[13px] font-semibold leading-snug px-2 group-hover:text-slate-700 transition-colors">
+              {dept.description}
+            </p>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
+  const currentDeptObj = DEPARTMENTS.find(d => d.id === activeDept);
+
+  return (
+    <Layout activeDept={activeDept} activeSubmodule={activeSubmodule} onNavigate={handleNavigate}>
+      {activeDept === 'home' ? (
+        renderHome()
+      ) : !activeSubmodule ? (
+        <div className="space-y-8">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-black text-slate-800 flex items-center gap-3">
+              <i className={`fa-solid ${currentDeptObj?.icon} text-cyan-500`}></i>
+              {currentDeptObj?.name}
+            </h2>
+            <button 
+              onClick={() => handleNavigate('home', null)}
+              className="px-4 py-2 bg-white border border-slate-200 text-slate-500 rounded-xl hover:bg-slate-50 hover:text-cyan-600 font-bold text-sm transition-all flex items-center gap-2"
+            >
+              <i className="fa-solid fa-arrow-left"></i> Voltar ao Início
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-4">
+            {currentDeptObj?.submodules.map((sub) => (
+              <button
+                key={sub.id}
+                onClick={() => handleNavigate(activeDept, sub.id)}
+                className="bg-white p-8 rounded-2xl border border-cyan-50 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all text-left group relative overflow-hidden"
+              >
+                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <i className={`fa-solid ${sub.isTerm ? 'fa-file-signature' : currentDeptObj.icon} text-6xl text-cyan-600`}></i>
+                </div>
+                <div className="w-12 h-12 bg-cyan-500 text-white rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-md shadow-cyan-200">
+                    <i className={`fa-solid ${sub.isTerm ? 'fa-file-signature' : currentDeptObj.icon}`}></i>
+                </div>
+                <h3 className="text-lg font-black text-slate-800 mb-1 relative z-10">{sub.name}</h3>
+                <p className="text-xs text-slate-500 font-medium relative z-10">
+                  {sub.isTerm ? 'Emite documento PDF formal.' : 'Gera mensagem formatada para WhatsApp.'}
+                </p>
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-8 animate-in fade-in duration-700">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-5">
+              <button 
+                onClick={() => activeTemplate ? setActiveTemplate(null) : handleNavigate(activeDept, null)} 
+                className="w-12 h-12 rounded-2xl bg-white border border-cyan-100 flex items-center justify-center text-slate-400 hover:text-cyan-600 shadow-sm transition-all hover:shadow-xl"
+              >
+                <i className="fa-solid fa-arrow-left"></i>
+              </button>
+              <div>
+                <h1 className="text-3xl font-[1000] text-slate-900">
+                  {activeTemplate ? activeTemplate.title : currentSub?.name}
+                </h1>
+                <p className="text-xs font-bold text-cyan-600 uppercase tracking-widest mt-1">
+                  {isTerm ? 'Documento PDF' : 'Mensagem Digital'}
                 </p>
               </div>
-
-              {/* Avatar com Fallback (Se não tiver foto, mostra a inicial) */}
-              {profile?.avatar_url ? (
-                <img 
-                  src={profile.avatar_url} 
-                  alt="Avatar" 
-                  className="w-10 h-10 rounded-full border-2 border-slate-100 shadow-sm"
-                />
-              ) : (
-                <div className="w-10 h-10 rounded-full bg-cyan-100 text-cyan-700 border-2 border-white shadow-sm flex items-center justify-center font-bold text-lg">
-                  {profile?.full_name?.charAt(0) || 'U'}
-                </div>
-              )}
-
-              <button 
-                onClick={logout}
-                className="ml-2 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
-                title="Sair do Sistema"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-              </button>
             </div>
-          </div>
-        </div>
-      </header>
-
-      {/* --- CONTEÚDO PRINCIPAL --- */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
-        
-  
-  {/* --- BARRA DE DEBUG (Remova depois) --- */}
-  <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6 text-sm font-mono">
-    <p>DEBUG DO SISTEMA:</p>
-    <p>Seu ID: {profile?.id}</p>
-    <p>Seu Email: {profile?.email}</p>
-    <p>Seu Cargo (Role): <strong>{profile?.role || 'Não carregado'}</strong></p>
-    <p>É Admin? {isAdmin ? 'SIM' : 'NÃO'}</p>
-  </div>
-  {/* --------------------------------------- */}
-
-  {/* ... resto do código ... */}
-
-        {/* Saudação */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-slate-800">
-            Bem-vindo de volta, {profile?.full_name?.split(' ')[0]}! 👋
-          </h1>
-          <p className="text-slate-500">Selecione um módulo para começar a trabalhar.</p>
-        </div>
-
-        {/* --- ÁREA DO ADMIN --- */}
-        {isAdmin && (
-          <div className="mb-10">
-            <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">
-              Painel Administrativo
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              
-              {/* Card de Gestão de Usuários */}
-              <div 
-                onClick={() => setShowAdminPanel(true)} // <--- CLIQUE AQUI ABRE O MODAL
-                className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer group"
-              >
-                <div className="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                  </svg>
-                </div>
-                <h3 className="font-bold text-slate-700 mb-1">Gestão de Usuários</h3>
-                <p className="text-sm text-slate-500">Aprovar cadastros e definir permissões.</p>
-              </div>
-
-              {/* Card de Configurações */}
-              <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer group">
-                <div className="w-12 h-12 bg-slate-100 text-slate-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </div>
-                <h3 className="font-bold text-slate-700 mb-1">Configurações</h3>
-                <p className="text-sm text-slate-500">Ajustes globais do sistema.</p>
-              </div>
-
-            </div>
-          </div>
-        )}
-
-        {/* --- MÓDULOS GERAIS (Todos veem) --- */}
-        <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">
-          Meus Aplicativos
-        </h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Exemplo de Módulo Funcional */}
-          <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer group">
-            <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-            <h3 className="font-bold text-slate-700 mb-1">Meus Documentos</h3>
-            <p className="text-sm text-slate-500">Acesse seus arquivos e relatórios.</p>
           </div>
           
-          {/* Placeholder para novos módulos */}
-          <div className="border-2 border-dashed border-slate-200 rounded-2xl p-6 flex flex-col items-center justify-center text-slate-400 hover:border-slate-300 hover:text-slate-500 transition-colors cursor-pointer min-h-[160px]">
-            <svg className="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-            <span className="text-sm font-medium">Em breve</span>
-          </div>
+          {status.success && !isFormularioIntegrado ? (
+            <SuccessMessage 
+              message={isTerm ? "Documento preparado com sucesso!" : "Mensagem formatada com sucesso!"} 
+              onReset={() => setStatus({ ...status, success: null })} 
+            />
+          ) : (
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
+              <div className="xl:col-span-7 2xl:col-span-8">
+                <FormCard title={activeTemplate ? activeTemplate.title : currentSub?.name || ''} icon={isTerm ? 'fa-file-signature' : 'fa-pen-to-square'}>
+                   <form onSubmit={(e) => e.preventDefault()} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {(activeTemplate ? activeTemplate.fields : (currentSub?.fields || [])).map(field => renderField(field))}
+                    
+                    <div className="md:col-span-2 flex justify-end gap-4 flex-wrap">
+                      
+                      {isFormularioIntegrado && (
+                         <button
+                           type="button"
+                           onClick={handleRegister}
+                           disabled={status.submitting}
+                           className="group flex items-center gap-3 px-8 py-4 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all duration-300 bg-emerald-500 text-white hover:bg-emerald-400 shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                         >
+                           <span>{status.submitting ? 'Enviando...' : 'Registrar no Sistema'}</span>
+                           <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center transition-colors">
+                             <i className="fa-solid fa-check text-sm"></i>
+                           </div>
+                         </button>
+                      )}
 
+                      <button 
+                        type="button" 
+                        onClick={handleClearData}
+                        className="w-60 group flex items-center justify-between px-6 py-4 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all duration-300 bg-slate-100 text-slate-400 hover:bg-red-50 hover:text-red-600 border border-transparent hover:border-red-100"
+                      >
+                        <span className="flex-1 text-left">
+                           <span className="group-hover:hidden">Limpar Campos</span>
+                           <span className="hidden group-hover:inline">Apagar Tudo</span>
+                        </span>
+                        <div className="w-8 h-8 rounded-full bg-white group-hover:bg-red-100 flex items-center justify-center transition-colors shadow-sm ml-2">
+                          <i className="fa-solid fa-eraser text-sm transition-transform group-hover:rotate-12"></i>
+                        </div>
+                      </button>
+
+                    </div>
+                  </form>
+                </FormCard>
+              </div>
+              <div className="xl:col-span-5 2xl:col-span-4">
+                <FormMirror 
+                  data={formData} 
+                  title={activeTemplate ? activeTemplate.title : currentSub?.name || ''} 
+                  generateMessage={generateCopyMessage} 
+                  pdfType={currentSub?.pdfType}
+                  isTerm={isTerm}
+                  isBlank={isBlank}
+                />
+              </div>
+            </div>
+          )}
         </div>
-
-      </main>
-    </div>
+      )}
+    </Layout>
   );
 };
 

@@ -4,7 +4,7 @@ import { AdminUserList } from '../components/AdminUserList';
 import { RoleManager } from '../components/RoleManager';
 import { useNavigate } from 'react-router-dom';
 
-export const AdminPage = () => {
+const AdminPage = () => {
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
   
@@ -71,3 +71,6 @@ export const AdminPage = () => {
     </div>
   );
 };
+
+export { AdminPage };
+export default AdminPage;
