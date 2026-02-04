@@ -1,6 +1,6 @@
 import React, { useState, useEffect, memo } from 'react';
 import { PDFDownloadLink, pdf, PDFViewer } from '@react-pdf/renderer';
-import { TermoAcordoPDF, CobrancaPDF, TermoCancelamentoPDF, EntregaVeiculoPDF, TermoAcordoAmparoPDF, TermoRecebimentoRastreadorPDF, RecebimentoPecasPDF, ReciboPrestadorPDF, ReciboPagamentoEstagioPDF, ReciboPagamentoTransportePDF, ReciboChequePDF, TermoIndenizacaoPecuniaria } from '../PDFTemplates';
+import { TermoAcordoPDF, CobrancaPDF, TermoCancelamentoPDF, EntregaVeiculoPDF, TermoAcordoAmparoPDF, TermoRecebimentoRastreadorPDF, RecebimentoPecasPDF, ReciboPrestadorPDF, ReciboPagamentoEstagioPDF, ReciboPagamentoTransportePDF, ReciboChequePDF, TermoIndenizacaoPecuniaria, TermoQuitacaoEventoPDF } from '../PDFTemplates';
 
 // --- 1. FUNÇÃO AUXILIAR PARA ESCOLHER O TEMPLATE ---
 const getPdfComponent = (type: string | undefined, data: any) => {
@@ -17,6 +17,7 @@ const getPdfComponent = (type: string | undefined, data: any) => {
     case 'termo_recibo_transporte' : return <ReciboPagamentoTransportePDF data = {data} />
     case 'termo_recibo_cheque' : return <ReciboChequePDF data = {data} />
     case 'termo_indenizacao_pecuniaria' : return <TermoIndenizacaoPecuniaria data = {data} />
+    case 'termo_quitacao_evento' : return <TermoQuitacaoEventoPDF data = {data} />
     default: return null;
   }
 };

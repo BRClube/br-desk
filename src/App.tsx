@@ -3,23 +3,23 @@ import Layout from '../src/Layout';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Login } from './pages/Login';
-import { AdminPage } from './pages/AdminPage'; // <--- IMPORT NOVO
+import { AdminPage } from './pages/AdminPage';
 import { DepartmentId, FormSubmissionStatus, Submodule, Template } from '../types';
 import { DEPARTMENTS } from './constants';
 import { Input, Select, TextArea, FormCard, SuccessMessage, FormMirror, RepeaterField } from './components/FormComponents';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { checkPermission } from './utils/permissions';
 
-// --- COMPONENTE DASHBOARD (LIMPO E COM BOTÃO VOLTAR) ---
+// URL DO SEU SCRIPT DO GOOGLE (COLE AQUI A URL QUE COPIOU DO DEPLOY)
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz27OajWuPo27GkycSofDwbvbc9IKA6MeCgdjzbprXcQ82Uvl9EpnxgPqRo4fAcfsqoPg/exec";
+
 const Dashboard: React.FC = () => {
   const { logout, profile } = useAuth();
   
-  // Filtra os departamentos
   const visibleDepartments = DEPARTMENTS.filter(dept => 
     checkPermission(profile?.allowed_modules, dept.id)
   );
 
-  // States
   const [activeDept, setActiveDept] = useState<DepartmentId>('home');
   const [activeSubmodule, setActiveSubmodule] = useState<string | null>(null);
   const [activeTemplate, setActiveTemplate] = useState<Template | null>(null);
@@ -50,12 +50,48 @@ const Dashboard: React.FC = () => {
   };
 
   const currentSub = getAllSubmodules().find(s => s.id === activeSubmodule);
+  const isTerm = currentSub?.isTerm || activeTemplate?.isTerm;
+  const isBlank = currentSub?.isBlank;
 
-  // Função para gerar a mensagem (mantida igual)
+  // --- LÓGICA DO REGISTRO (GOOGLE SHEETS) ---
+  // Verifica se é um dos formulários especiais
+  const isFormularioIntegrado = activeSubmodule === 'abertura_assistencia' || activeSubmodule === 'fechamento_assistencia';
+
+  const handleRegister = async () => {
+    if (!window.confirm("Confirma o registro desses dados no sistema?")) return;
+
+    setStatus({ submitting: true, success: null, error: null });
+
+    const payload = {
+      ...formData,
+      form_id: activeSubmodule, // Envia ID para o script saber se é abertura ou fechamento
+      user_email: profile?.email
+    };
+
+    try {
+      await fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      // Como usamos no-cors, assumimos sucesso se não der erro de rede
+      alert("Dados enviados para o sistema com sucesso!");
+      setStatus({ submitting: false, success: true, error: null });
+      
+      // Opcional: Limpar após registrar? Se quiser, descomente abaixo
+      // setFormData({}); 
+
+    } catch (error) {
+      console.error("Erro:", error);
+      alert("Erro ao conectar com o sistema.");
+      setStatus({ submitting: false, success: null, error: "Erro de conexão" });
+    }
+  };
+  // ------------------------------------------
+
   const generateCopyMessage = () => {
-    // ... (Mantenha sua lógica de generateCopyMessage aqui igualzinha a antes)
-    // Para economizar espaço na resposta, estou omitindo, mas você NÃO DEVE APAGAR
-    // Copie do seu código anterior
     let templateContent = "";
     if (activeTemplate) { templateContent = activeTemplate.content; } 
     else if (currentSub?.messageTemplate) { 
@@ -64,7 +100,6 @@ const Dashboard: React.FC = () => {
     else { return ""; }
 
     const processedData = { ...formData };
-    // ... lógica de data ...
     let message = templateContent;
     Object.entries(processedData).forEach(([key, value]) => {
       message = message.replace(new RegExp(`{{${key}}}`, 'g'), (value as string) || `[${key}]`);
@@ -72,26 +107,46 @@ const Dashboard: React.FC = () => {
     return message;
   };
 
-  const simulateSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setStatus({ submitting: true, success: null, error: null });
-    setTimeout(() => setStatus({ submitting: false, success: true, error: null }), 800);
+  const handlePrintHtml = () => {
+    const content = generateCopyMessage(); 
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Impressão</title>
+            <style>body { font-family: Arial, sans-serif; margin: 20mm; }</style>
+          </head>
+          <body>${content}</body>
+        </html>
+      `);
+      printWindow.document.close();
+      setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+      }, 250);
+    }
   };
 
-  // Renderizadores de Campo
   const renderField = (field: any) => {
     switch(field.type) {
-      case 'select': return <Select key={field.id} name={field.id} label={field.label} required={field.required} options={field.options || []} onChange={handleInputChange} />;
+      case 'select': return <Select key={field.id} name={field.id} label={field.label} required={field.required} options={field.options || []} value={formData[field.id] || ''} onChange={handleInputChange} />;
       case 'repeater': return <RepeaterField key={field.id} field={field} value={formData[field.id] || []} onChange={(newArray) => setFormData({...formData, [field.id]: newArray})} />;
-      case 'textarea': return <div key={field.id} className="md:col-span-2"><TextArea name={field.id} label={field.label} placeholder={field.placeholder} required={field.required} onChange={handleInputChange} /></div>;
-      default: return <Input key={field.id} name={field.id} label={field.label} placeholder={field.placeholder} type={field.type || 'text'} required={field.required} onChange={handleInputChange} />;
+      case 'textarea': return <div key={field.id} className="md:col-span-2"><TextArea name={field.id} label={field.label} placeholder={field.placeholder} required={field.required} value={formData[field.id] || ''} onChange={handleInputChange} /></div>;
+      default: return <Input key={field.id} name={field.id} label={field.label} placeholder={field.placeholder} type={field.type || 'text'} required={field.required} value={formData[field.id] || ''} onChange={handleInputChange} />;
+    }
+  };
+
+  const handleClearData = () => {
+    if (window.confirm("Tem certeza que deseja limpar todos os campos?")) {
+      setFormData({}); 
+      setStatus({ submitting: false, success: null, error: null });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
   const renderHome = () => (
     <div className="space-y-12 animate-in fade-in duration-1000">
-      
-      {/* Header Home */}
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 pb-4">
         <div className="max-w-2xl">
           <div className="flex items-center space-x-3 text-cyan-500 font-black text-xs uppercase tracking-[0.3em] mb-4">
@@ -111,7 +166,6 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Grid de Departamentos */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
         {visibleDepartments.map((dept) => (
           <button 
@@ -143,8 +197,6 @@ const Dashboard: React.FC = () => {
         renderHome()
       ) : !activeSubmodule ? (
         <div className="space-y-8">
-          
-          {/* --- NOVO BOTÃO DE VOLTAR NA TELA DO DEPARTAMENTO --- */}
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-black text-slate-800 flex items-center gap-3">
               <i className={`fa-solid ${currentDeptObj?.icon} text-cyan-500`}></i>
@@ -157,7 +209,6 @@ const Dashboard: React.FC = () => {
               <i className="fa-solid fa-arrow-left"></i> Voltar ao Início
             </button>
           </div>
-          {/* -------------------------------------------------- */}
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-4">
             {currentDeptObj?.submodules.map((sub) => (
@@ -170,7 +221,7 @@ const Dashboard: React.FC = () => {
                     <i className={`fa-solid ${sub.isTerm ? 'fa-file-signature' : currentDeptObj.icon} text-6xl text-cyan-600`}></i>
                 </div>
                 <div className="w-12 h-12 bg-cyan-500 text-white rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-md shadow-cyan-200">
-                   <i className={`fa-solid ${sub.isTerm ? 'fa-file-signature' : currentDeptObj.icon}`}></i>
+                    <i className={`fa-solid ${sub.isTerm ? 'fa-file-signature' : currentDeptObj.icon}`}></i>
                 </div>
                 <h3 className="text-lg font-black text-slate-800 mb-1 relative z-10">{sub.name}</h3>
                 <p className="text-xs text-slate-500 font-medium relative z-10">
@@ -182,7 +233,6 @@ const Dashboard: React.FC = () => {
         </div>
       ) : (
         <div className="space-y-8 animate-in fade-in duration-700">
-          {/* Form Content (Mantido Igual) */}
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-5">
               <button 
@@ -196,28 +246,59 @@ const Dashboard: React.FC = () => {
                   {activeTemplate ? activeTemplate.title : currentSub?.name}
                 </h1>
                 <p className="text-xs font-bold text-cyan-600 uppercase tracking-widest mt-1">
-                  {currentSub?.isTerm ? 'Documento PDF' : 'Mensagem Digital'}
+                  {isTerm ? 'Documento PDF' : 'Mensagem Digital'}
                 </p>
               </div>
             </div>
           </div>
           
-          {status.success ? (
+          {status.success && !isFormularioIntegrado ? (
             <SuccessMessage 
-              message={currentSub?.isTerm ? "Documento preparado com sucesso!" : "Mensagem formatada com sucesso!"} 
+              message={isTerm ? "Documento preparado com sucesso!" : "Mensagem formatada com sucesso!"} 
               onReset={() => setStatus({ ...status, success: null })} 
             />
           ) : (
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
               <div className="xl:col-span-7 2xl:col-span-8">
-                <FormCard title={activeTemplate ? activeTemplate.title : currentSub?.name || ''} icon={currentSub?.isTerm ? 'fa-file-signature' : 'fa-pen-to-square'}>
-                   <form onSubmit={simulateSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormCard title={activeTemplate ? activeTemplate.title : currentSub?.name || ''} icon={isTerm ? 'fa-file-signature' : 'fa-pen-to-square'}>
+                   <form onSubmit={(e) => e.preventDefault()} className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {(activeTemplate ? activeTemplate.fields : (currentSub?.fields || [])).map(field => renderField(field))}
-                    <div className="md:col-span-2 flex justify-end">
-                      <button className="btn-primary text-white font-[900] py-4 px-12 rounded-2xl text-sm tracking-widest uppercase">
-                        REVISAR DADOS
+                    
+                    {/* --- ÁREA DOS BOTÕES ATUALIZADA --- */}
+                    <div className="md:col-span-2 flex justify-end gap-4 flex-wrap">
+                      
+                      {/* 1. BOTÃO REGISTRAR (Continua aparecendo só onde precisa) */}
+                      {isFormularioIntegrado && (
+                         <button
+                           type="button"
+                           onClick={handleRegister}
+                           disabled={status.submitting}
+                           className="group flex items-center gap-3 px-8 py-4 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all duration-300 bg-emerald-500 text-white hover:bg-emerald-400 shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                         >
+                           <span>{status.submitting ? 'Enviando...' : 'Registrar no Sistema'}</span>
+                           <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center transition-colors">
+                             <i className="fa-solid fa-check text-sm"></i>
+                           </div>
+                         </button>
+                      )}
+
+                      {/* 2. BOTÃO LIMPAR (Agora aparece em TODOS os formulários, Termos e Fichas) */}
+                      <button 
+                        type="button" 
+                        onClick={handleClearData}
+                        className="w-60 group flex items-center justify-between px-6 py-4 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all duration-300 bg-slate-100 text-slate-400 hover:bg-red-50 hover:text-red-600 border border-transparent hover:border-red-100"
+                      >
+                        <span className="flex-1 text-left">
+                           <span className="group-hover:hidden">Limpar Campos</span>
+                           <span className="hidden group-hover:inline">Apagar Tudo</span>
+                        </span>
+                        <div className="w-8 h-8 rounded-full bg-white group-hover:bg-red-100 flex items-center justify-center transition-colors shadow-sm ml-2">
+                          <i className="fa-solid fa-eraser text-sm transition-transform group-hover:rotate-12"></i>
+                        </div>
                       </button>
+
                     </div>
+                    {/* ---------------------------------- */}
                   </form>
                 </FormCard>
               </div>
@@ -227,8 +308,8 @@ const Dashboard: React.FC = () => {
                   title={activeTemplate ? activeTemplate.title : currentSub?.name || ''} 
                   generateMessage={generateCopyMessage} 
                   pdfType={currentSub?.pdfType}
-                  isTerm={currentSub?.isTerm || activeTemplate?.isTerm}
-                  isBlank={currentSub?.isBlank}
+                  isTerm={isTerm}
+                  isBlank={isBlank}
                 />
               </div>
             </div>
@@ -239,26 +320,19 @@ const Dashboard: React.FC = () => {
   );
 };
 
-// --- APP PRINCIPAL ---
 const App = () => {
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL}>
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<Login />} />
-          
-          {/* NOVA ROTA DE ADMIN */}
           <Route path="/admin" element={
             <ProtectedRoute>
-               {/* O AdminPage usa um layout interno diferente ou o padrão, 
-                   mas como ele é full page, colocamos dentro de um Layout vazio ou direto */}
                <Layout activeDept="home" activeSubmodule={null} onNavigate={() => {}}>
                   <AdminPage />
                </Layout>
             </ProtectedRoute>
           } />
-
-          {/* ROTA PADRÃO DASHBOARD */}
           <Route path="/*" element={
             <ProtectedRoute>
               <Dashboard />

@@ -8,7 +8,7 @@ import assinatura from './assets/assinatura.png'
 const styles = StyleSheet.create({
   page: {
     paddingTop: 145,      // Espaço para o cabeçalho azul
-    paddingBottom: 60,    // Espaço para o rodapé
+    paddingBottom: 110,    // Espaço para o rodapé
     paddingHorizontal: 40,
     fontFamily: 'Helvetica',
     fontSize: 11,
@@ -542,7 +542,7 @@ export const RecebimentoPecasPDF = ({ data }: { data: any }) => {
         </Text>
 
         <View style={{ marginBottom: 15 }}>
-          <Text style={styles.paragraph}><Text style={styles.bold}>Associada:</Text> {data.associado}</Text>
+          <Text style={styles.paragraph}><Text style={styles.bold}>{data.terc_assoc === 'associado' ? 'Associado:' : 'Terceiro:'}</Text> {data.associado}</Text>
           <Text style={styles.paragraph}><Text style={styles.bold}>Placa do Veículo:</Text> {data.placa}</Text>
           <Text style={styles.paragraph}><Text style={styles.bold}>Marca/Modelo:</Text> {data.marca_modelo}</Text>
         </View>
@@ -945,4 +945,67 @@ export const TermoIndenizacaoPecuniaria = ({ data }: { data: any }) => {
       </BaseLayout>
     </Document>
   );
+};
+
+
+export const TermoQuitacaoEventoPDF = ({ data }: { data: any }) => {
+
+  const dt_inicio = formatDate(data.data_inicio);
+  const dt_conclusao = formatDate(data.data_conclusao);
+  const dt_hoje = formatDate(data.data_hoje);
+
+  return(
+    <Document>
+      <BaseLayout>
+
+        <Text style={styles.title}>
+          TERMO DE QUITAÇÃO DE EVENTO
+        </Text>
+        <Text style={styles.paragraph}>
+          Responsável pelo veículo: {data.resposavel} {'\n'}
+          CPF/CNPJ: {data.cpf_cnpj} {'\n'}
+          Veículo: {data.veiculo} {'\n'}
+          Ano: {data.ano} {'\n'}
+          Placa: {data.placa} {'\n'}
+          Data de início dos reparos: {dt_inicio} {'\n'}
+          Data de conclusão dos reparos: {dt_conclusao} {'\n'}
+        </Text>
+
+        <Text style={styles.paragraph}>
+          Declaração:
+        </Text>
+
+        <Text style={styles.paragraph}>
+          Recebi o veículo acima identificado, devidamente reparado dos danos sofridos de objeto de
+          acidente de trânsito, outorgando a mais plena, rasa, irrevogável e irretratável quitação,
+          passada, presente e futura, para nada mais reclamar, em Juízo ou fora dele, seja a que título
+          for, renunciando expressamente a todo e qualquer outro direito que possa vir a ter em
+          decorrência do evento.
+        </Text>
+
+        <Text style={styles.paragraph}>
+          Sendo este termo assinado, a quitação é dada à Br Clube, oficina reparadora e ao causador
+          do evento.
+        </Text>
+
+        <Text style={[styles.paragraph, { textAlign: 'right', marginTop: 30 }]}>
+          Goiânia, {dt_hoje}.
+        </Text>
+
+        <View style={styles.signatureBlock} wrap={false}>
+            {/* Se tiver a imagem da assinatura da BR Clube salva no projeto: */}
+            <Image 
+             src={assinatura}
+             style={{ width: 150, height: 'auto', marginTop: 10 }}/>
+            <View style={styles.signatureLine} />
+            <Text style={[styles.paragraph, styles.bold]}>ASSINATURA DO ASSOCIADO</Text>
+          </View>
+
+      </BaseLayout>
+    </Document>
+  );
+
+
+
+
 };

@@ -103,7 +103,78 @@ export const DEPARTMENTS: Department[] = [
         ],
         messageTemplate: 
         `🚨 *BR CLUBE - NOVO ACIONAMENTO* 🚨\n\n*Protocolo:* {{protocolo}}\n*Data/Horário:* {{data-hora}}\n*Placa:* {{placa}}\n*Modelo:* {{modelo}}\n*Cor:* {{cor}}\n*Solicitante:* {{solicitante}}\n*Telefone:* {{telefone}}\n*Fator Gerador:* {{fator-gerador}}\n*Observações do Fator Gerador:* {{obs-gerador}}\n*Chave e Documento no local?:* {{chave-documento}}\n*Veículo de fácil acesso?:* {{facil-acesso}}\n*Serviço:* {{servico}}\n*Endereço de Origem:* {{endereco-origem}}\n*Referência de Origem:* {{referencia-origem}}\n*Endereço de Destino:* {{endereco-destino}}\n*Referência de Destino:* {{referencia-destino}}\n*Quilometragem:* {{quilometragem}}\n*Quilometragem Total:* {{quilometragem-total}}`
-      }
+      },
+      { 
+        id: 'abertura_assistencia', 
+        name: 'Abertura de Assistência 24H', 
+        parentId: 'assistance',
+        fields: [
+            { id: 'protocolo', label: 'Protocolo' },
+            { id: 'associado', label: 'Associado'},
+            { id: 'placa', label: 'Placa' },
+            { id: 'data-hora', label: 'Data e Hora', type: 'datetime-local' },
+            { id: 'solicitante', label: 'Solicitante' },
+            { id: 'causa', label: 'Causa / Fator Gerador', type: 'select', options: [
+              { value: 'pane_eletrica', label: 'Pane Elétrica'},
+              { value: 'pane_seca', label: 'Pane Seca'},
+              { value: 'colisao', label: 'Colisão'},
+              { value: 'pane_mecanica', label: 'Pane Mecânica'},
+              { value: 'bateria', label: 'Bateria (descarregada)'},
+              { value: 'pneu', label: 'Pneu Furado'},
+              { value: 'pane_eletrica_bateria', label: 'Pane Elétrica (bateria)'},
+              { value: 'nao_liga', label: 'Carro Não Liga'},
+              { value: 'marcha_travou', label: 'A Marcha Travou'},
+              { value: 'remoção_oficina', label: 'Remoção de Oficina'},
+              { value: 'chave_trancada', label: 'Carro Trancado com a Chave Dentro'},
+              { value: 'nao_liga2', label: 'O Carro Não Liga, Tem Ignição, Mas Não Dá Partida'},
+              { value: 'superaquecimento', label: 'Super Aquecimento'},
+              { value: 'pane', label: 'Pane Genérica'}
+            ]},
+            { id: 'cidade_origem', label: 'Cidade de Origem'},
+            { id: 'cidade_destino', label: 'Cidade de Destino'},
+            { id: 'km_atendimento', label: 'KM no Atendimento'},
+            { id: 'km_total', label: 'KM Total'},
+            { id: 'tipo_servico', label: 'Tipo de Serviço', type: 'select', options:[
+              {value: 'guincho', label: 'Guincho' },
+              {value: 'carga_bateria', label: 'Carga de Bateria' },
+              {value: 'troca_pneu', label: 'Troca de Pneu' },
+              {value: 'chaveiro', label: 'Chaveiro' },
+              {value: 'brpower', label: 'BR Power' },
+              {value: 'aux_deslocamento', label: 'Auxílio Deslocamento' },
+              {value: 'aux_hospedagem', label: 'Auxílio Hospedagem'}
+            ] },
+            { id: 'hora_solicitação', label: 'Hora da Solicitação'},
+            { id: 'telefone', label: 'Telefone', type: 'tel', placeholder: '(00) 00000-0000' },
+            { id: 'obs-gerador', label: 'Observações do Fator Gerador', type: 'textarea' },
+            { id: 'chave-documento', label: 'Chave e Documento estão no local?', type: 'select', options: [{ value: 'Sim', label: 'Sim' }, { value: 'Não', label: 'Não' }] },
+            { id: 'facil-acesso', label: 'Veículo de fácil acesso?', type: 'select', options: [{ value: 'Sim', label: 'Sim' }, { value: 'Não', label: 'Não' }] },
+        ],
+        messageTemplate: 
+        `🚨 *BR CLUBE - NOVO ACIONAMENTO* 🚨\n\n*Protocolo:* {{protocolo}}\n*Associado:* {{associado}}\n*Data/Horário:* {{data-hora}}\n*Hora Solicitação:* {{hora_solicitação}}\n*Placa:* {{placa}}\n*Solicitante:* {{solicitante}}\n*Telefone:* {{telefone}}\n*Fator Gerador:* {{causa}}\n*Observações:* {{obs-gerador}}\n*Chave/Doc no local?:* {{chave-documento}}\n*Fácil acesso?:* {{facil-acesso}}\n*Serviço:* {{tipo_servico}}\n*Origem:* {{cidade_origem}}\n*Destino:* {{cidade_destino}}\n*KM Atendimento:* {{km_atendimento}}\n*KM Total:* {{km_total}}`
+    },
+    {
+      id: 'fechamento_assistencia',
+      name: 'Fechamento de Assistência 24H',
+      parentId: 'assistance',
+      fields: [
+        { id: 'protocolo', label: 'Protocolo'},
+        { id: 'prestador', label: 'Prestador'},
+        { id: 'valor', label: 'Valor'},
+        { id: 'pagamento', label: 'Forma de Pagamento'},
+        { id: 'nota_fiscal', label: 'Nota Fiscal'},
+        { id: 'hora_autorizacao', label: 'Hora de Autorização'},
+        { id: 'hora_prestador', label:'Hora de Envio de Prestador'},
+        { id: 'chegada_prestador', label: 'Hora da Chegada do Prestador'},
+        { id: 'encerramento_atendimento', label: 'Hora do Encerramento do Atendimento'},
+        { id: 'atendente', label: 'Atendente'},
+        { id: 'link_pagamento', label: 'Link da NF ou RCB'},
+        { id: 'link_fotos', label: 'Link das Fotos do Atendimento'},
+        { id: 'atendimento_domicilio', label: 'Atendimento no Domicílio?', type:'select', options: [
+          { value: 'sim', label: 'Sim' },
+          { value: 'nao', label: 'Não' }
+        ]}
+      ]
+    }
     ]
   },
   { 
@@ -111,7 +182,7 @@ export const DEPARTMENTS: Department[] = [
     name: 'Cadastro', 
     icon: 'fa-user-plus', 
     description: 'Gestão de cadastro de associados',
-    colorClass: 'bg-green-600',
+    colorClass: 'bg-blue-600',
     submodules: [
       { 
         id: 'adesao', 
@@ -161,7 +232,7 @@ export const DEPARTMENTS: Department[] = [
     name: 'Cancelamentos', 
     icon: 'fa-ban', 
     description: 'Cancelamento de serviços',
-    colorClass: 'bg-yellow-400',
+    colorClass: 'bg-black',
     submodules: [
       { 
         id: 'cancelamento', 
@@ -260,7 +331,7 @@ export const DEPARTMENTS: Department[] = [
     name: 'Cobrança', 
     icon: 'fa-file-signature', 
     description: 'Cobrança de mensalidades e serviços',
-    colorClass: 'bg-indigo-600',
+    colorClass: 'bg-orange-600',
     submodules: [
       { 
         id: 'mensagem_cobranca', 
@@ -398,7 +469,7 @@ export const DEPARTMENTS: Department[] = [
     name: 'Comercial', 
     icon: 'fa-bag-shopping', 
     description: 'Comunicação comercial e promoções',
-    colorClass: 'bg-green-600',
+    colorClass: 'bg-blue-600',
     submodules: [
        // ... MANTIVE O RESTO IGUAL ...
       { 
@@ -414,7 +485,7 @@ export const DEPARTMENTS: Department[] = [
           { id: 'referencia', label: 'Ponto de Referência', type: 'textarea'}
         ],
         messageTemplate: `<div style="border: 1px solid black; padding: 10px;">
-<img src="/images/logo.png" alt="Logo Destinatário" style="width: 80px; height: auto;"><br>
+<img src="/src/assets/brclube2.png" alt="Logo Destinatário" style="width: 80px; height: auto;"><br>
 <strong>Destinatário:</strong> {{destinatario}}<br>
 <strong>Endereço: </strong> {{endereco}}<br>
 <strong>CEP:</strong> {{cep}}<br>
@@ -423,7 +494,7 @@ export const DEPARTMENTS: Department[] = [
 <br>
 
 <div style="border: 1px solid black; padding: 10px;">
-<img src="/images/logo.png" alt="Logo Destinatário" style="width: 80px; height: auto;"><br>
+<img src="/src/assets/brclube2.png" alt="Logo Destinatário" style="width: 80px; height: auto;"><br>
 <strong>Remetente:</strong> ASSOCIAÇÃO BR CLUBE DE BENEFÍCIOS<br>
 <strong>Endereço:</strong> Edifício New Business Style: Sala 141-A | Av. Dep. Jamel Cecílio, 2496 - Jardim Goiás, Goiânia-GO.<br>
 <strong>CEP:</strong> 74810-100<br>
@@ -753,10 +824,14 @@ Central de Agendamento\n
         pdfType: 'termo_pecas',
         parentId: 'events',
         fields:[
+          { id: 'terc_assoc', label: 'Terceiro ou Associado', type: 'select', options: [
+            {value: 'terceiro', label: 'Terceiro'},
+            {value: 'associado', label: 'Associado'}
+          ]},
           { id: 'responsavel', label: 'Responsável pelo Recebimento'},
           { id: 'cpf', label: 'CPF'},
           { id: 'cargo', label: 'Cargo/Função'},
-          { id: 'associado', label: 'Associado'},
+          { id: 'associado', label: 'Nome do Associado/Terceiro'},
           { id: 'placa', label: 'Placa'},
           { id: 'marca_modelo', label: 'Marca/Modelo'},
           { id: 'pecas', label: 'Pecas', type: 'repeater', subFields: [
@@ -767,6 +842,24 @@ Central de Agendamento\n
             { id: 'valor', label: 'Valor'}
           ]},
           { id: 'data_hoje', label: 'Data de Hoje', type: 'date'}
+        ],
+        messageTemplate: ''
+      },
+      {
+        id: 'termo_quitacao_evento',
+        name: 'Termo de Quitação de Evento',
+        isTerm: true,
+        pdfType: 'termo_quitacao_evento',
+        parentId: 'events',
+        fields:[
+          { id: 'responsavel', label: 'Responsável Pelo Veículo'},
+          { id: 'cpf_cnpj', label: 'CPF/CNPJ'},
+          { id: 'veiculo', label: 'Veículo', placeholder: 'Ex: FORD KA TRAIL 1.0 12V FLEX MEC. 5P'},
+          { id: 'ano', label: 'Ano'},
+          { id: 'placa', label: 'Placa'},
+          { id: 'data_inicio', label: 'Data de Início dos Reparos', type: 'date'},
+          { id: 'data_conclusao', label: 'Data de Conclusão dos Reparos', type: 'date'},
+          { id: 'data_hoje', label: 'Data do Contrato', type: 'date'}
         ],
         messageTemplate: ''
       }
@@ -879,7 +972,7 @@ Central de Agendamento\n
     name: 'Rastreamento',
     icon: 'fa-satellite-dish',
     description: 'Agendamento e termos de rastreamento',
-    colorClass: 'bg-blue-600',
+    colorClass: 'bg-yellow-600',
     submodules: [
       {
         id: 'termo-recebimento-rastreador',
