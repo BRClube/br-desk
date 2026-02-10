@@ -1,5 +1,5 @@
 
-export type DepartmentId = 'home' | 'assistance' | 'registration' | 'tracking' | 'events' | 'cancellations' | 'billing' | 'commercial' | 'legal' | 'financing';
+export type DepartmentId = 'home' | 'assistance' | 'registration' | 'tracking' | 'events' | 'cancellations' | 'billing' | 'commercial' | 'legal' | 'financing' | 'assistencia';
 
 export interface TemplateField {
   id: string;

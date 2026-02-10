@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Layout from '../Layout';
 import { useAuth } from '../contexts/AuthContext';
 import { DepartmentId, FormSubmissionStatus, Submodule, Template } from '../../types';
 import { DEPARTMENTS } from '../constants';
-// 1. IMPORTAR O ProviderSearch AQUI
-import { Input, Select, TextArea, FormCard, SuccessMessage, FormMirror, RepeaterField, ProviderSearch, PrestadorResultado } from '../components/FormComponents';
+import { 
+  Input, Select, TextArea, FormCard, SuccessMessage, FormMirror, 
+  RepeaterField, ProviderSearch, PrestadorResultado, TicketList, Ticket // <--- Certifique-se de importar TicketList e Ticket
+} from '../components/FormComponents';
 import { checkPermission } from '../utils/permissions';
 import { formatDateTime } from '../utils/Formatters';
 
@@ -15,6 +17,12 @@ const API_TOKEN = "brclube-2026";
 const Dashboard: React.FC = () => {
   const { logout, profile } = useAuth();
   
+  // --- ESTADOS DO CRM (ATENDIMENTOS) ---
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [isLoadingTickets, setIsLoadingTickets] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // Estado de loading geral (edição)
+  // -------------------------------------
+
   const visibleDepartments = DEPARTMENTS.filter(dept => 
     checkPermission(profile?.allowed_modules, dept.id)
   );
@@ -30,14 +38,82 @@ const Dashboard: React.FC = () => {
   const [providerResults, setProviderResults] = useState<PrestadorResultado[] | null>(null);
   const [searchRadius, setSearchRadius] = useState(10);
 
+  // --- EFEITO: CARREGAR TICKETS AO ENTRAR ---
+  useEffect(() => {
+    if (profile?.email) {
+      loadTickets();
+      // Opcional: Atualizar a cada 60s
+      const interval = setInterval(loadTickets, 60000);
+      return () => clearInterval(interval);
+    }
+  }, [profile]); // Recarrega se o perfil mudar (login)
+
+  const loadTickets = async () => {
+    setIsLoadingTickets(true);
+    try {
+      const response = await fetch(GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({ 
+          action: 'listar_atendimentos', 
+          atendente: profile?.email, // Filtra pelo email do usuário logado
+          token_acesso: API_TOKEN
+        })
+      });
+      const data = await response.json();
+      if (data.status === 'sucesso') {
+        setTickets(data.lista);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar tickets", error);
+    } finally {
+      setIsLoadingTickets(false);
+    }
+  };
+
+  const handleEditTicket = async (protocolo: string) => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({ 
+          action: 'buscar_detalhes_protocolo', 
+          protocolo: protocolo,
+          token_acesso: API_TOKEN
+        })
+      });
+      const data = await response.json();
+      
+      if (data.status === 'sucesso') {
+        // Navega para a tela de Abertura se não estiver nela
+        // (Ajuste conforme sua lógica: talvez você queira abrir o formulário correto baseado no tipo)
+        if (activeSubmodule !== 'abertura_assistencia') {
+            handleNavigate('assistencia', 'abertura_assistencia'); 
+        }
+        
+        setFormData(data.dados); // Preenche o formulário
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        alert("Erro ao carregar: " + data.msg);
+      }
+    } catch (error) {
+      alert("Erro de conexão.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  // -------------------------------------------
+
   const handleNavigate = (deptId: DepartmentId, submoduleId: string | null) => {
     setActiveDept(deptId);
     setActiveSubmodule(submoduleId);
     setActiveTemplate(null);
     setStatus({ submitting: false, success: null, error: null });
     setFormData({});
-    setProviderResults(null); // Limpa resultados ao mudar de tela
+    setProviderResults(null); 
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Recarrega a lista sempre que mudar de tela para garantir dados frescos
+    if (profile?.email) loadTickets();
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -68,6 +144,7 @@ const Dashboard: React.FC = () => {
       ...formData,
       form_id: activeSubmodule,
       user_email: profile?.email,
+      atendente: profile?.full_name || profile?.email, // Envia o NOME para ficar bonito na planilha (Coluna Y)
       token_acesso: API_TOKEN
     };
 
@@ -79,8 +156,9 @@ const Dashboard: React.FC = () => {
         body: JSON.stringify(payload),
       });
 
-      alert("Dados enviados para o sistema com sucesso!");
+      alert("Dados salvos com sucesso!");
       setStatus({ submitting: false, success: true, error: null });
+      loadTickets(); // Atualiza a lista lateral imediatamente
 
     } catch (error) {
       console.error("Erro:", error);
@@ -145,12 +223,13 @@ const Dashboard: React.FC = () => {
   };
 
   // --- FUNÇÕES DE BUSCA ---
-  const handleSearchProviders = async () => {
-    const enderecoBusca = formData['endereco-origem']; // Usando o novo campo
-    const tipoServico = formData['servico']; 
+  const handleSearchProviders = async (addressFromWidget?: string, serviceTypeFromWidget?: string) => {
+    // Lógica atualizada para aceitar input do Widget
+    const enderecoBusca = addressFromWidget || formData['endereco-origem']; 
+    const tipoServico = serviceTypeFromWidget || formData['servico'];
 
     if (!enderecoBusca) {
-      alert("Por favor, preencha o Endereço de Origem antes de buscar.");
+      alert("Por favor, digite um endereço para buscar.");
       return;
     }
 
@@ -164,7 +243,7 @@ const Dashboard: React.FC = () => {
           action: 'buscar_prestadores',
           endereco: enderecoBusca,
           tipo_servico: tipoServico,
-          raio: searchRadius, // 2. ENVIANDO O RAIO NO FETCH
+          raio: searchRadius,
           token_acesso: API_TOKEN 
         })
       });
@@ -188,16 +267,17 @@ const Dashboard: React.FC = () => {
   const handleSelectProvider = (prestador: PrestadorResultado) => {
     setFormData(prev => ({
       ...prev,
-      prestador: prestador.nome, // Certifique-se que o ID no constants.ts é 'prestador'
-      telefone_prestador: prestador.telefone || '', // Certifique-se que o ID é 'telefone_prestador'
+      prestador_nome: prestador.nome, // Atualizado para bater com o Backend (prestador_nome)
+      prestador: prestador.nome, // Mantendo compatibilidade antiga
+      telefone_prestador: prestador.telefone || '',
     }));
-    setProviderResults(null);
+    // Não limpa o resultado imediatamente para permitir ver os dados, se quiser
+    // setProviderResults(null); 
   };
   // ------------------------
 
   const renderHome = () => (
     <div className="space-y-12 animate-in fade-in duration-1000">
-      {/* ... (renderHome permanece igual) ... */}
        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 pb-4">
         <div className="max-w-2xl">
           <div className="flex items-center space-x-3 text-cyan-500 font-black text-xs uppercase tracking-[0.3em] mb-4">
@@ -247,6 +327,7 @@ const Dashboard: React.FC = () => {
       {activeDept === 'home' ? (
         renderHome()
       ) : !activeSubmodule ? (
+        // --- TELA DE SUBMÓDULOS (Botões grandes) ---
         <div className="space-y-8">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-black text-slate-800 flex items-center gap-3">
@@ -283,6 +364,7 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       ) : (
+        // --- TELA DO FORMULÁRIO (Onde o CRM aparece) ---
         <div className="space-y-8 animate-in fade-in duration-700">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-5">
@@ -301,6 +383,7 @@ const Dashboard: React.FC = () => {
                 </p>
               </div>
             </div>
+            {isLoading && <span className="text-cyan-600 font-bold animate-pulse">Carregando dados...</span>}
           </div>
           
           {status.success && !isFormularioIntegrado ? (
@@ -309,31 +392,27 @@ const Dashboard: React.FC = () => {
               onReset={() => setStatus({ ...status, success: null })} 
             />
           ) : (
-            <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
-              <div className="xl:col-span-7 2xl:col-span-8">
-                <FormCard title={activeTemplate ? activeTemplate.title : currentSub?.name || ''} icon={isTerm ? 'fa-file-signature' : 'fa-pen-to-square'}>
-                    
-                    {/* --- 2. ADICIONADO AQUI: BUSCA DE PRESTADORES --- */}
-                    {activeSubmodule === 'abertura_assistencia' && (
-                      <ProviderSearch 
-                        onSearch={handleSearchProviders}
-                        isSearching={isSearching}
-                        results={providerResults}
-                        onSelect={handleSelectProvider}
-                        radius={searchRadius}
-                        onRadiusChange={setSearchRadius}
-                        apiKey={MAPS_API_KEY}
-                        scriptUrl={GOOGLE_SCRIPT_URL}
-                        customerAddress={formData['endereco-origem'] || 'Brasil'}
-                      />
-                    )}
-                    {/* ----------------------------------------------- */}
+            // --- AQUI ESTÁ O LAYOUT DE 3 COLUNAS ---
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+              
+              {/* 1. LISTA DE ATENDIMENTOS (CRM) */}
+              <div className="xl:col-span-3 h-[600px] xl:h-auto flex flex-col">
+                <TicketList 
+                   tickets={tickets} 
+                   onSelectTicket={handleEditTicket} 
+                   isLoading={isLoadingTickets} 
+                   onRefresh={loadTickets} 
+                   currentAttendant={profile?.full_name || profile?.email || 'Usuário'}
+                />
+              </div>
 
+              {/* 2. FORMULÁRIO CENTRAL */}
+              <div className="xl:col-span-6">
+                <FormCard title={activeTemplate ? activeTemplate.title : currentSub?.name || ''} icon={isTerm ? 'fa-file-signature' : 'fa-pen-to-square'}>
                     <form onSubmit={(e) => e.preventDefault()} className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {(activeTemplate ? activeTemplate.fields : (currentSub?.fields || [])).map(field => renderField(field))}
                     
                     <div className="md:col-span-2 flex justify-end gap-4 flex-wrap">
-                      
                       {isFormularioIntegrado && (
                           <button
                             type="button"
@@ -341,7 +420,7 @@ const Dashboard: React.FC = () => {
                             disabled={status.submitting}
                             className="group flex items-center gap-3 px-8 py-4 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all duration-300 bg-emerald-500 text-white hover:bg-emerald-400 shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
-                            <span>{status.submitting ? 'Enviando...' : 'Registrar no Sistema'}</span>
+                            <span>{status.submitting ? 'Enviando...' : 'Salvar Alterações'}</span>
                             <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center transition-colors">
                               <i className="fa-solid fa-check text-sm"></i>
                             </div>
@@ -351,22 +430,18 @@ const Dashboard: React.FC = () => {
                       <button 
                         type="button" 
                         onClick={handleClearData}
-                        className="w-60 group flex items-center justify-between px-6 py-4 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all duration-300 bg-slate-100 text-slate-400 hover:bg-red-50 hover:text-red-600 border border-transparent hover:border-red-100"
+                        className="w-12 group flex items-center justify-center rounded-2xl font-bold text-xs uppercase tracking-widest transition-all duration-300 bg-slate-100 text-slate-400 hover:bg-red-50 hover:text-red-600"
+                        title="Limpar formulário"
                       >
-                        <span className="flex-1 text-left">
-                            <span className="group-hover:hidden">Limpar Campos</span>
-                            <span className="hidden group-hover:inline">Apagar Tudo</span>
-                        </span>
-                        <div className="w-8 h-8 rounded-full bg-white group-hover:bg-red-100 flex items-center justify-center transition-colors shadow-sm ml-2">
-                          <i className="fa-solid fa-eraser text-sm transition-transform group-hover:rotate-12"></i>
-                        </div>
+                         <i className="fa-solid fa-eraser text-sm"></i>
                       </button>
-
                     </div>
                   </form>
                 </FormCard>
               </div>
-              <div className="xl:col-span-5 2xl:col-span-4">
+
+              {/* 3. PREVIEW E BUSCA (DIREITA) */}
+              <div className="xl:col-span-3 space-y-6">
                 <FormMirror 
                   data={formData} 
                   title={activeTemplate ? activeTemplate.title : currentSub?.name || ''} 
@@ -375,7 +450,21 @@ const Dashboard: React.FC = () => {
                   isTerm={isTerm}
                   isBlank={isBlank}
                 />
+                
+                {activeSubmodule === 'abertura_assistencia' && (
+                   <ProviderSearch 
+                      onSearch={handleSearchProviders} // Agora passa a função com os argumentos certos
+                      isSearching={isSearching}
+                      results={providerResults}
+                      onSelect={handleSelectProvider}
+                      radius={searchRadius}
+                      onRadiusChange={setSearchRadius}
+                      apiKey={MAPS_API_KEY}
+                      scriptUrl={GOOGLE_SCRIPT_URL}
+                   />
+                )}
               </div>
+
             </div>
           )}
         </div>
