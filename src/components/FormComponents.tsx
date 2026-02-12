@@ -15,6 +15,40 @@ interface MapModalProps {
   onClose: () => void;
 }
 
+const WEBHOOK_BUTTONS = [
+  { 
+    id: 'PRESTADOR_CAMINHO', 
+    label: 'A Caminho', 
+    icon: 'fa-motorcycle', 
+    color: 'blue' // Opções: blue, purple, green, red, amber, cyan
+  },
+  { 
+    id: 'NO_LOCAL', 
+    label: 'No Local', 
+    icon: 'fa-map-pin', 
+    color: 'purple' 
+  },
+  { 
+    id: 'FINALIZADO', 
+    label: 'Finalizado', 
+    icon: 'fa-flag-checkered', 
+    color: 'green' 
+  },
+];
+
+// Helper para traduzir a cor simples em classes Tailwind completas
+const getButtonColorClasses = (color: string) => {
+  const themes: Record<string, string> = {
+    blue:   'bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-100',
+    purple: 'bg-purple-50 text-purple-600 border-purple-100 hover:bg-purple-100',
+    green:  'bg-green-50 text-green-600 border-green-100 hover:bg-green-100',
+    red:    'bg-red-50 text-red-600 border-red-100 hover:bg-red-100',
+    amber:  'bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-100',
+    cyan:   'bg-cyan-50 text-cyan-600 border-cyan-100 hover:bg-cyan-100',
+  };
+  return themes[color] || themes['blue']; // Retorna azul se a cor não existir
+};
+
 const MapModal: React.FC<MapModalProps> = ({ provider, customerAddress, apiKey, scriptUrl, onClose }) => {
   const [info, setInfo] = useState<any>(provider); // Começa com os dados que já temos
   const [loadingInfo, setLoadingInfo] = useState(false);
@@ -678,39 +712,53 @@ export interface Ticket {
   data?: string;
 }
 
+// ============================================================================
+// LISTA DE ATENDIMENTOS (ATUALIZADA COM CUSTOM MESSAGE)
+// ============================================================================
 interface TicketListProps {
   tickets: Ticket[];
   onSelectTicket: (protocolo: string) => void;
   isLoading: boolean;
   onRefresh: () => void;
   currentAttendant: string;
+  onQuickEdit?: (protocolo: string, action: 'abertura' | 'fechamento') => void;
+  
+  // MUDANÇA 1: Atualizamos os tipos aceitos aqui
+  onWebhook?: (protocolo: string, type: string, customText?: string) => void;
 }
 
-export const TicketList: React.FC<TicketListProps> = ({ tickets, onSelectTicket, isLoading, onRefresh, currentAttendant }) => {
+export const TicketList: React.FC<TicketListProps> = ({ 
+  tickets, onSelectTicket, isLoading, onRefresh, currentAttendant, onQuickEdit, onWebhook 
+}) => {
+  const [expandedId, setExpandedId] = React.useState<string | null>(null);
+  
+  // MUDANÇA 2: Estado para guardar o texto customizado de cada protocolo
+  const [customMessages, setCustomMessages] = React.useState<Record<string, string>>({});
+
+  const toggleExpand = (protocolo: string) => {
+    setExpandedId(expandedId === protocolo ? null : protocolo);
+  };
+
+  const handleCustomMsgChange = (protocolo: string, text: string) => {
+    setCustomMessages(prev => ({ ...prev, [protocolo]: text }));
+  };
+
   return (
     <div className="bg-white border border-slate-200 rounded-2xl shadow-lg shadow-slate-200/40 overflow-hidden h-full flex flex-col animate-in slide-in-from-left-4 duration-500">
       
-      {/* Cabeçalho */}
+      {/* Cabeçalho igual ao anterior... */}
       <div className="bg-slate-50/80 px-4 py-4 border-b border-slate-100 flex justify-between items-center backdrop-blur-sm">
         <div>
           <h4 className="font-extrabold text-slate-700 text-xs uppercase tracking-widest flex items-center gap-2">
-            <i className="fa-solid fa-list-check text-cyan-600"></i> Atendimentos
+            <i className="fa-solid fa-tower-broadcast text-cyan-600"></i> Central de Chamados
           </h4>
-          <p className="text-[10px] text-slate-400 font-bold mt-0.5 truncate max-w-[120px]" title={currentAttendant}>
-            Logado: {currentAttendant.split(' ')[0]}
-          </p>
+          <p className="text-[10px] text-slate-400 font-bold mt-0.5">Visão Global</p>
         </div>
-        <button 
-          onClick={onRefresh} 
-          disabled={isLoading}
-          className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-cyan-600 hover:border-cyan-300 hover:shadow-sm transition-all flex items-center justify-center"
-          title="Atualizar Lista"
-        >
+        <button onClick={onRefresh} disabled={isLoading} className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-cyan-600 hover:border-cyan-300 hover:shadow-sm transition-all flex items-center justify-center">
           <i className={`fa-solid fa-rotate ${isLoading ? 'fa-spin' : ''}`}></i>
         </button>
       </div>
 
-      {/* Lista com Scroll */}
       <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2.5 bg-slate-50/30">
         {tickets.length === 0 && !isLoading ? (
           <div className="h-full flex flex-col items-center justify-center text-slate-300 gap-2 opacity-60">
@@ -718,46 +766,118 @@ export const TicketList: React.FC<TicketListProps> = ({ tickets, onSelectTicket,
             <span className="text-xs font-medium italic">Nenhum chamado pendente.</span>
           </div>
         ) : (
-          tickets.map((t) => (
-            <div 
-              key={t.protocolo}
-              onClick={() => onSelectTicket(t.protocolo)}
-              className="group relative bg-white p-3 rounded-xl border border-slate-100 shadow-sm hover:shadow-md hover:border-cyan-300 hover:-translate-y-0.5 transition-all cursor-pointer"
-            >
-              <div className="absolute right-3 top-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                 <i className="fa-solid fa-pen-to-square text-cyan-500"></i>
-              </div>
+          tickets.map((t) => {
+            const isExpanded = expandedId === t.protocolo;
+            
+            return (
+              <div key={t.protocolo} className={`group relative bg-white rounded-xl border transition-all cursor-pointer overflow-hidden ${isExpanded ? 'border-cyan-400 shadow-md ring-1 ring-cyan-100' : 'border-slate-100 hover:border-cyan-300 shadow-sm'}`}>
+                {/* Cabeçalho do Card (Mantido Igual) */}
+                <div className="p-3" onClick={() => toggleExpand(t.protocolo)}>
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <span className="font-black text-xs text-slate-700 block mb-0.5">{t.associado}</span>
+                      <div className="flex items-center gap-1 text-[9px] text-slate-400">
+                         <i className="fa-solid fa-user-headset"></i> 
+                         <span>{t.atendente ? t.atendente.split(' ')[0] : 'Sem dono'}</span>
+                      </div>
+                    </div>
+                    <i className={`fa-solid fa-chevron-down text-slate-300 text-xs transition-transform duration-300 ${isExpanded ? 'rotate-180 text-cyan-500' : ''}`}></i>
+                  </div>
+                  <div className="flex items-center gap-2">
+                     <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border uppercase tracking-wider ${
+                        t.status === 'ABERTO' ? 'bg-green-50 text-green-600 border-green-100' : 
+                        t.status === 'FECHADO' ? 'bg-slate-100 text-slate-500 border-slate-200' :
+                        'bg-amber-50 text-amber-600 border-amber-100'
+                      }`}>
+                        {t.status}
+                      </span>
+                      <span className="text-[9px] font-mono text-slate-400 bg-slate-50 px-1 rounded border border-slate-100">
+                        {t.protocolo}
+                      </span>
+                  </div>
+                </div>
 
-              <div className="flex justify-between items-start mb-2 pr-4">
-                <span className="font-black text-xs text-slate-700 truncate block max-w-[140px]" title={t.associado}>{t.associado}</span>
-              </div>
-              
-              <div className="flex items-center gap-2 mb-2">
-                 <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border uppercase tracking-wider ${
-                    t.status === 'ABERTO' ? 'bg-green-50 text-green-600 border-green-100' : 
-                    t.status === 'EM ANDAMENTO' ? 'bg-blue-50 text-blue-600 border-blue-100' :
-                    t.status === 'AGUARDANDO' ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                    'bg-slate-100 text-slate-500 border-slate-200'
-                  }`}>
-                    {t.status}
-                 </span>
-                 <span className="text-[9px] font-mono text-slate-400 bg-slate-50 px-1 rounded border border-slate-100">
-                    {t.protocolo}
-                 </span>
-              </div>
+                {/* ÁREA EXPANSÍVEL */}
+                {isExpanded && (
+                  <div className="bg-slate-50 border-t border-slate-100 p-3 animate-in slide-in-from-top-2 duration-200 space-y-4">
+                     
+                     {/* 1. Editar Dados */}
+                     <div>
+                        <label className="text-[9px] font-bold text-slate-400 uppercase mb-1 block">Ações Rápidas</label>
+                        <div className="grid grid-cols-2 gap-2">
+                           <button onClick={(e) => { e.stopPropagation(); onQuickEdit?.(t.protocolo, 'abertura'); }} className="px-2 py-2 bg-white border border-slate-200 rounded-lg text-[10px] font-bold text-slate-600 hover:text-cyan-600 hover:border-cyan-300 transition-colors flex items-center justify-center gap-1">
+                              <i className="fa-solid fa-pen"></i> Abertura
+                           </button>
+                           <button onClick={(e) => { e.stopPropagation(); onQuickEdit?.(t.protocolo, 'fechamento'); }} className="px-2 py-2 bg-white border border-slate-200 rounded-lg text-[10px] font-bold text-slate-600 hover:text-red-500 hover:border-red-300 transition-colors flex items-center justify-center gap-1">
+                              <i className="fa-solid fa-pen-to-square"></i> Fechamento
+                           </button>
+                        </div>
+                     </div>
 
-              <div className="flex items-center gap-3 text-[10px] text-slate-400 font-medium border-t border-slate-50 pt-2 mt-1">
-                 <span className="flex items-center gap-1"><i className="fa-solid fa-car"></i> {t.placa}</span>
-                 {t.data && <span className="flex items-center gap-1"><i className="fa-regular fa-clock"></i> {t.data.split('T')[0]}</span>}
+                     {/* 2. WEBHOOKS (Botões Fixos + Customizado) */}
+                     {/* 2. WEBHOOKS DINÂMICOS */}
+                     {onWebhook && (
+                       <div>
+                          <label className="text-[9px] font-bold text-slate-400 uppercase mb-2 block">
+                             Comunicação via Webhook
+                          </label>
+                          
+                          {/* GRID DINÂMICO: Se tiver 3 botões, usa 3 colunas. Se tiver 4, usa 4 (ou quebra linha) */}
+                          <div className={`grid gap-2 mb-3 ${WEBHOOK_BUTTONS.length <= 3 ? `grid-cols-${WEBHOOK_BUTTONS.length}` : 'grid-cols-2'}`}>
+                             
+                             {WEBHOOK_BUTTONS.map((btn) => (
+                               <button 
+                                 key={btn.id}
+                                 onClick={(e) => { 
+                                    e.stopPropagation(); 
+                                    // O TypeScript vai reclamar se o ID não estiver na lista de tipos, 
+                                    // então forçamos "as any" aqui para permitir flexibilidade total
+                                    onWebhook(t.protocolo, btn.id as any); 
+                                 }}
+                                 className={`py-2 border rounded-lg text-[9px] font-bold transition-colors flex flex-col items-center gap-1 ${getButtonColorClasses(btn.color)}`}
+                                 title={btn.label}
+                               >
+                                  <i className={`fa-solid ${btn.icon} text-xs`}></i> 
+                                  {btn.label}
+                               </button>
+                             ))}
+
+                          </div>
+
+                          {/* MENSAGEM CUSTOMIZADA (Continua igual) */}
+                          <div className="flex gap-2">
+                            <input 
+                              type="text" 
+                              placeholder="Mensagem personalizada..."
+                              value={customMessages[t.protocolo] || ''}
+                              onChange={(e) => handleCustomMsgChange(t.protocolo, e.target.value)}
+                              onClick={(e) => e.stopPropagation()}
+                              className="flex-1 px-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-700 focus:border-cyan-500 outline-none"
+                            />
+                            <button
+                              onClick={(e) => { 
+                                e.stopPropagation(); 
+                                onWebhook(t.protocolo, 'CUSTOM', customMessages[t.protocolo]); 
+                                handleCustomMsgChange(t.protocolo, ''); 
+                              }}
+                              disabled={!customMessages[t.protocolo]}
+                              className="w-8 h-full bg-slate-800 text-white rounded-lg hover:bg-black disabled:opacity-50 flex items-center justify-center transition-colors"
+                            >
+                              <i className="fa-solid fa-paper-plane text-xs"></i>
+                            </button>
+                          </div>
+                       </div>
+                     )}
+
+                     {/* 3. Encerrar */}
+                     <button onClick={(e) => { e.stopPropagation(); onQuickEdit?.(t.protocolo, 'fechamento'); }} className="w-full py-2 bg-red-50 text-red-600 border border-red-100 rounded-lg text-[10px] font-bold hover:bg-red-500 hover:text-white hover:shadow-md transition-all flex items-center justify-center gap-2">
+                        <i className="fa-solid fa-lock"></i> Encerrar
+                     </button>
+                  </div>
+                )}
               </div>
-            </div>
-          ))
-        )}
-        
-        {isLoading && tickets.length === 0 && (
-           <div className="text-center py-10 text-slate-400 text-xs animate-pulse">
-              Carregando chamados...
-           </div>
+            );
+          })
         )}
       </div>
     </div>

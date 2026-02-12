@@ -14,6 +14,13 @@ const MAPS_API_KEY = "AIzaSyA0rzO01A48M_HN1G6tr1hnZdB-QYtaZkg";
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzPqUPLLfvTq2RNxcPzP3k4qtUDFgVX0YUDggg2Rq_F3CkhAvSiGJkLqHmqmoqAfvokyQ/exec";
 const API_TOKEN = "brclube-2026"; 
 
+const WEBHOOKS = {
+  PADRAO: "https://chat.googleapis.com/v1/spaces/AAQA_9VXbIs/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=xYp-47r0nPVdhG8o2MDBdnnhfDDpz-XV78N0OP91oyw",
+  // PRESTADOR_CAMINHO: "https://chat.googleapis.com/v1/spaces/AAQA_9VXbIs/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=xYp-47r0nPVdhG8o2MDBdnnhfDDpz-XV78N0OP91oyw", 
+  // NO_LOCAL: "https://chat.googleapis.com/v1/spaces/AAQA_9VXbIs/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=xYp-47r0nPVdhG8o2MDBdnnhfDDpz-XV78N0OP91oyw",
+  // FINALIZADO: "https://chat.googleapis.com/v1/spaces/AAQA_9VXbIs/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=xYp-47r0nPVdhG8o2MDBdnnhfDDpz-XV78N0OP91oyw/..."
+};
+
 const Dashboard: React.FC = () => {
   const { logout, profile } = useAuth();
   
@@ -46,6 +53,67 @@ const Dashboard: React.FC = () => {
       return () => clearInterval(interval);
     }
   }, [profile]);
+
+  // Função para enviar mensagem rápida no Chat
+  const handleSendWebhook = async (
+    protocolo: string, 
+    tipo: string, 
+    customText?: string
+  ) => {
+    
+    // URL do Webhook (pode personalizar se quiser canais diferentes)
+    const url = WEBHOOKS.PADRAO; 
+
+    if (!url || url.includes("...")) {
+      alert("Webhook não configurado no código.");
+      return;
+    }
+
+    let mensagemFinal = "";
+
+    // Lógica das mensagens
+    switch (tipo) {
+      case 'PRESTADOR_CAMINHO':
+        mensagemFinal = `🚀 *Prestador A Caminho*\nProtocolo: ${protocolo}\nStatus: Deslocamento iniciado`;
+        break;
+      case 'NO_LOCAL':
+        mensagemFinal = `📍 *Prestador No Local*\nProtocolo: ${protocolo}\nStatus: Atendimento iniciado`;
+        break;
+      case 'FINALIZADO':
+        mensagemFinal = `✅ *Atendimento Finalizado*\nProtocolo: ${protocolo}`;
+        break;
+      case 'CUSTOM':
+        if (!customText) return; // Proteção
+        mensagemFinal = `💬 *Mensagem da Central*\nProtocolo: ${protocolo}\nMsg: ${customText}`;
+        break;
+    }
+
+    try {
+      await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+        body: JSON.stringify({ text: mensagemFinal })
+      });
+      alert(`Webhook enviado com sucesso!`);
+    } catch (e) {
+      console.error(e);
+      alert("Erro ao enviar webhook.");
+    }
+  };
+
+  // Função Auxiliar para Navegar Já Editando
+  const handleQuickAction = (protocolo: string, action: 'abertura' | 'fechamento') => {
+      // 1. Define o destino
+      const targetSubmodule = action === 'abertura' ? 'abertura_assistencia' : 'fechamento_assistencia';
+      
+      // 2. Navega
+      if (activeSubmodule !== targetSubmodule) {
+          handleNavigate('assistance', targetSubmodule);
+      }
+      
+      // 3. Carrega os dados
+      handleEditTicket(protocolo);
+  };
 
   // --- FUNÇÃO DE CARREGAR TICKETS (BLINDADA) ---
   const loadTickets = async () => {
@@ -424,10 +492,10 @@ const Dashboard: React.FC = () => {
               Se for Assistência, divide a tela. Se for outro depto, mostra só botões.
           */}
           {activeDept === 'assistance' ? (
-            <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
               
               {/* COLUNA DA ESQUERDA: BOTÕES DE AÇÃO (Ocupa 9 colunas) */}
-              <div className="xl:col-span-9 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="xl:col-span-7 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
                 {currentDeptObj?.submodules.map((sub) => (
                   <button
                     key={sub.id}
@@ -449,7 +517,7 @@ const Dashboard: React.FC = () => {
               </div>
 
               {/* COLUNA DA DIREITA: LISTA DE ATENDIMENTOS (Ocupa 3 colunas) */}
-              <div className="xl:col-span-3 flex flex-col h-full space-y-4">
+              <div className="xl:col-span-5 flex flex-col h-full space-y-4">
                  <div className="bg-white p-4 rounded-2xl border border-cyan-100 shadow-sm">
                     <h3 className="text-sm font-black text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-2">
                        <i className="fa-solid fa-list-ul text-cyan-500"></i>
@@ -467,6 +535,8 @@ const Dashboard: React.FC = () => {
                     isLoading={isLoadingTickets} 
                     onRefresh={loadTickets} 
                     currentAttendant={profile?.full_name || profile?.email || 'Usuário'}
+                    onQuickEdit={handleQuickAction}
+                    onWebhook={handleSendWebhook}
                  />
               </div>
 
