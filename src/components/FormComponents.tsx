@@ -952,3 +952,122 @@ export const TicketList: React.FC<TicketListProps> = ({
     </div>
   );
 };
+
+interface UploadModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  tickets: any[]; // Lista de protocolos em aberto
+  onUpload: (protocolo: string, files: File[]) => Promise<void>;
+  isUploading: boolean;
+}
+
+export const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, tickets, onUpload, isUploading }) => {
+  const [selectedProtocol, setSelectedProtocol] = useState('');
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]); // Array de arquivos
+
+  if (!isOpen) return null;
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      // Converte FileList para Array normal
+      setSelectedFiles(Array.from(e.target.files));
+    }
+  };
+
+  const handleSubmit = () => {
+    if (!selectedProtocol || selectedFiles.length === 0) {
+      alert("Selecione um protocolo e pelo menos um arquivo.");
+      return;
+    }
+    onUpload(selectedProtocol, selectedFiles);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-in fade-in zoom-in duration-200">
+        
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+            <i className="fa-brands fa-google-drive text-blue-600"></i>
+            Anexar Arquivos
+          </h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-red-500 transition-colors">
+            <i className="fa-solid fa-xmark text-xl"></i>
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          {/* Seleção de Protocolo */}
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Protocolo</label>
+            <select 
+              value={selectedProtocol} 
+              onChange={(e) => setSelectedProtocol(e.target.value)}
+              className="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+            >
+              <option value="">Selecione o atendimento...</option>
+              {tickets.map(t => (
+                <option key={t.protocolo} value={t.protocolo}>
+                  {t.protocolo} - {t.associado || 'Sem Nome'} ({t.placa})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Seleção de Arquivos Múltiplos */}
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                Arquivos ({selectedFiles.length})
+            </label>
+            <div className="relative border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:bg-slate-50 transition-colors group cursor-pointer overflow-hidden">
+              <input 
+                type="file" 
+                multiple // <--- A MÁGICA ESTÁ AQUI
+                onChange={handleFileChange} 
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              />
+              
+              <div className="space-y-2 pointer-events-none">
+                <i className={`fa-solid ${selectedFiles.length > 0 ? 'fa-folder-open text-emerald-500' : 'fa-cloud-arrow-up text-slate-400'} text-3xl mb-2 group-hover:scale-110 transition-transform`}></i>
+                
+                {selectedFiles.length > 0 ? (
+                    <div className="text-left bg-white/80 p-2 rounded-lg max-h-32 overflow-y-auto text-xs text-slate-600 border border-slate-100">
+                        {selectedFiles.map((f, idx) => (
+                            <div key={idx} className="truncate border-b last:border-0 border-slate-100 py-1">
+                                <i className="fa-solid fa-file mr-2 text-slate-400"></i>
+                                {f.name}
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <>
+                        <p className="text-sm text-slate-600 font-medium">Clique ou arraste arquivos aqui</p>
+                        <p className="text-xs text-slate-400">Seleção múltipla permitida</p>
+                    </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Botão de Envio */}
+          <button 
+            onClick={handleSubmit}
+            disabled={isUploading || !selectedProtocol || selectedFiles.length === 0}
+            className="w-full py-4 mt-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
+          >
+            {isUploading ? (
+              <>
+                <i className="fa-solid fa-circle-notch fa-spin"></i> Enviando {selectedFiles.length} arquivos...
+              </>
+            ) : (
+              <>
+                <i className="fa-solid fa-paper-plane"></i> Enviar Tudo
+              </>
+            )}
+          </button>
+        </div>
+
+      </div>
+    </div>
+  );
+};

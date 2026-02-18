@@ -179,13 +179,11 @@ export const DEPARTMENTS: Department[] = [
         { id: 'valor', label: 'Valor'},
         { id: 'pagamento', label: 'Forma de Pagamento'},
         { id: 'nota_fiscal', label: 'Nota Fiscal'},
-        { id: 'hora_autorizacao', label: 'Hora de Autorização'},
-        { id: 'hora_prestador', label:'Hora de Envio de Prestador'},
-        { id: 'chegada_prestador', label: 'Hora da Chegada do Prestador'},
-        { id: 'encerramento_atendimento', label: 'Hora do Encerramento do Atendimento'},
+        { id: 'hora_autorizacao', label: 'Hora de Autorização', type: 'datetime-local'},
+        { id: 'hora_prestador', label:'Hora de Envio de Prestador', type: 'datetime-local'},
+        { id: 'chegada_prestador', label: 'Hora da Chegada do Prestador', type: 'datetime-local'},
+        { id: 'encerramento_atendimento', label: 'Hora do Encerramento do Atendimento', type: 'datetime-local'},
         { id: 'atendente', label: 'Atendente'},
-        { id: 'link_pagamento', label: 'Link da NF ou RCB'},
-        { id: 'link_fotos', label: 'Link das Fotos do Atendimento'},
         { id: 'atendimento_domicilio', label: 'Atendimento no Domicílio?', type:'select', options: [
           { value: 'sim', label: 'Sim' },
           { value: 'nao', label: 'Não' }
