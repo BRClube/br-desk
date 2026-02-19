@@ -648,7 +648,7 @@ const Dashboard: React.FC = () => {
                 {activeSubmodule === 'abertura_assistencia' && (
                   <div className="flex justify-end mb-4">
                     <a 
-                      href="https://coloque-o-link-do-sistema-aqui.com.br" // 🔴 COLOQUE SEU LINK AQUI
+                      href="https://portal.sivisweb.com.br/loja/012/login" // LINK AQUI
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 hover:text-indigo-700 rounded-xl font-bold text-xs uppercase tracking-wider transition-colors border border-indigo-100 shadow-sm"

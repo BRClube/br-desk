@@ -1,6 +1,6 @@
 import React, { useState, useEffect, memo } from 'react';
 import { PDFDownloadLink, pdf, PDFViewer } from '@react-pdf/renderer';
-import { TermoAcordoPDF, CobrancaPDF, TermoCancelamentoPDF, EntregaVeiculoPDF, TermoAcordoAmparoPDF, TermoRecebimentoRastreadorPDF, RecebimentoPecasPDF, ReciboPrestadorPDF, ReciboPagamentoEstagioPDF, ReciboPagamentoTransportePDF, ReciboChequePDF, TermoIndenizacaoPecuniaria, TermoQuitacaoEventoPDF } from '../PDFTemplates';
+import { TermoAcordoPDF, CobrancaPDF, TermoCancelamentoPDF, EntregaVeiculoPDF, TermoAcordoAmparoPDF, TermoRecebimentoRastreadorPDF, RecebimentoPecasPDF, ReciboPrestadorPDF, ReciboPagamentoEstagioPDF, ReciboPagamentoTransportePDF, ReciboChequePDF, TermoIndenizacaoPecuniaria, TermoQuitacaoEventoPDF, EtiquetaEnvioPDF } from '../PDFTemplates';
 
 
 
@@ -230,6 +230,7 @@ const getPdfComponent = (type: string | undefined, data: any) => {
     case 'termo_recibo_cheque': return <ReciboChequePDF data={data} />
     case 'termo_indenizacao_pecuniaria': return <TermoIndenizacaoPecuniaria data={data} />
     case 'termo_quitacao_evento': return <TermoQuitacaoEventoPDF data={data} />
+    case 'etiqueta_envio': return <EtiquetaEnvioPDF data={data} />
     default: return null;
   }
 };

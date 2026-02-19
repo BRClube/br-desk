@@ -355,19 +355,63 @@ export const DEPARTMENTS: Department[] = [
         fields: [
           { id: 'associado', label: 'Nome Completo', required: true },
           { id: 'placa', label: 'Placa', required: true },
-          { id: 'genero', label: 'Genero', type: 'select', options: [{value: 'masculino', label: 'Masculino'}, {value: 'feminino', label: 'Feminino'}], required: true },
+          { id: 'genero', label: 'Gênero', type: 'select', options: [{value: 'masculino', label: 'Masculino'}, {value: 'feminino', label: 'Feminino'}], required: true },
+          // Corrigido para data_hoje (com underline)
+          { id: 'data_hoje', label: 'Data de Hoje', type: 'date', required: true },
           { id: 'boletos', label: 'Boletos Vencidos', type: 'repeater', subFields: [
-            {id: 'data_vencimento', label: 'Data de Vencimento', type: 'date'},
-            {id: 'valor', label: 'Valor', type: 'number'}
+            {id: 'data_vencimento', label: 'Data de Vencimento', type: 'date', required: true},
+            {id: 'valor', label: 'Valor', type: 'number', required: true}
           ]}
         ],
-        messageTemplate: (data: any) => {
+        messageTemplate: (data) => {
           const boletos = data.boletos || [];
-          let listaTexto = '';
-          if(boletos.length > 0){
-            listaTexto = boletos.map((b: any) =>`Vencimento: ${b.data_vencimento}\nValor: ${b.valor}\n`).join('\n');
+          
+          // 1. Lendo e convertendo a Data de Hoje com segurança contra fuso horário
+          let dataFormulario = new Date(); // Fallback de segurança para o dia real
+          if (data.data_hoje) {
+            const partesHoje = data.data_hoje.split('-');
+            dataFormulario = new Date(Number(partesHoje[0]), Number(partesHoje[1]) - 1, Number(partesHoje[2]));
           }
-          return `Olá, {{associado}}!\n\nTudo bem com você?\n\nSr${data.genero === 'feminino' ? 'a' : ''}. {{associado}}, até o presente momento nosso sistema não identificou o pagamento dos seguintes boletos vencidos.\n\nPlaca/Veículo: {{placa}}\n\n${listaTexto}\nNeste caso, informamos que o pagamento AINDA poderá ser feito via PIX, sem ocorrência de juros por atraso. Nosso código pix é CNPJ:\n\n40.410.992/0001-40\n\nApós o pagamento, compartilhe o comprovante por aqui, por gentileza, para informarmos a baixa no sistema.\n\nCaso o pagamento já tenha sido realizado, por favor desconsiderar essa mensagem.\n\nDe já, externamos nossa gratidão!\n\nEquipe BR Clube!`
+          dataFormulario.setHours(0, 0, 0, 0);
+
+          const listaTexto = boletos.map((b) => {
+            if(!b.data_vencimento || !b.valor) return ''; // Proteção caso o usuário adicione uma linha em branco
+
+            // 2. Converter a data de vencimento com segurança
+            const partes = b.data_vencimento.split('-'); 
+            const dataVenc = new Date(Number(partes[0]), Number(partes[1]) - 1, Number(partes[2]));
+            dataVenc.setHours(0, 0, 0, 0);
+
+            // 3. Calcular a diferença em dias
+            const diffTime = dataFormulario.getTime() - dataVenc.getTime();
+            let diasEmAtraso = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diasEmAtraso < 0) {
+              diasEmAtraso = 0;
+            }
+
+            // 4. Calcular o valor final
+            let valorFinal = Number(b.valor);
+            
+            if (diasEmAtraso > 0) {
+              const multa = valorFinal * 0.05; // 5% de multa
+              const juros = valorFinal * 0.0003 * diasEmAtraso; // 0.03% a.d
+              valorFinal = valorFinal + multa + juros;
+            }
+
+            // Formatar para exibição bonita no BR (DD/MM/YYYY e R$ com vírgula)
+            const dataBr = `${partes[2]}/${partes[1]}/${partes[0]}`;
+            const valorBr = valorFinal.toFixed(2).replace('.', ',');
+
+            return `Vencimento: ${dataBr}\nDias de atraso: ${diasEmAtraso}\nValor Atualizado: R$ ${valorBr}\n`;
+          }).join('\n');
+
+          // Como você já está num "messageTemplate" via função, podemos usar variáveis dinâmicas direto no return, sem precisar do "{{}}" regex.
+          const nome = data.associado || '[Nome]';
+          const placa = data.placa || '[Placa]';
+          const tratamento = data.genero === 'feminino' ? 'Sra.' : 'Sr.';
+
+          return `Olá, ${nome}!\n\nTudo bem com você?\n\n${tratamento} ${nome}, até o presente momento nosso sistema não identificou o pagamento dos seguintes boletos vencidos:\n\nPlaca/Veículo: ${placa}\n\n${listaTexto}\nNeste caso, informamos que o pagamento AINDA poderá ser feito via PIX, com os valores devidamente atualizados acima. Nosso código pix é E-Mail:\n\nfinanceiro@brclube.org\n\nApós o pagamento, compartilhe o comprovante por aqui, por gentileza, para informarmos a baixa no sistema.\n\nCaso o pagamento já tenha sido realizado, por favor desconsiderar essa mensagem.\n\nDesde já, externamos nossa gratidão!\n\nEquipe BR Clube!`;
         }
       },
       { 
@@ -481,7 +525,7 @@ export const DEPARTMENTS: Department[] = [
   },
   { 
     id: 'commercial', 
-    name: 'Comercial', 
+    name: 'Pós-Adesão', 
     icon: 'fa-bag-shopping', 
     description: 'Comunicação comercial e promoções',
     colorClass: 'bg-blue-600',
@@ -492,30 +536,13 @@ export const DEPARTMENTS: Department[] = [
         name: 'Enviar Kit para Associado', 
         parentId: 'commercial',
         isTerm: true,
-        isBlank: true,
+        pdfType: 'etiqueta_envio', // 👈 ISSO AQUI FAZ O BOTÃO "GERAR PDF" APARECER
         fields: [
-          { id: 'destinatario', label: 'Destinatario', required: true },
-          { id: 'endereco', label: 'Endereço'},
-          { id: 'cep', label: 'CEP', type: 'number' },
+          { id: 'destinatario', label: 'Destinatário', required: true },
+          { id: 'endereco', label: 'Endereço Completo (Rua, Nº, Bairro, Cidade-UF)', required: true },
+          { id: 'cep', label: 'CEP', type: 'text', required: true },
           { id: 'referencia', label: 'Ponto de Referência', type: 'textarea'}
-        ],
-        messageTemplate: `<div style="border: 1px solid black; padding: 10px;">
-<img src="/src/assets/brclube2.png" alt="Logo Destinatário" style="width: 80px; height: auto;"><br>
-<strong>Destinatário:</strong> {{destinatario}}<br>
-<strong>Endereço: </strong> {{endereco}}<br>
-<strong>CEP:</strong> {{cep}}<br>
-<strong>Ponto de referência:</strong> {{referencia}}<br>
-</div>
-<br>
-
-<div style="border: 1px solid black; padding: 10px;">
-<img src="/src/assets/brclube2.png" alt="Logo Destinatário" style="width: 80px; height: auto;"><br>
-<strong>Remetente:</strong> ASSOCIAÇÃO BR CLUBE DE BENEFÍCIOS<br>
-<strong>Endereço:</strong> Edifício New Business Style: Sala 141-A | Av. Dep. Jamel Cecílio, 2496 - Jardim Goiás, Goiânia-GO.<br>
-<strong>CEP:</strong> 74810-100<br>
-<strong>Telefone:</strong> 4020-0164<br>
-</div>
-`
+        ]
       },
       { 
         id: 'confirmar-recebimento', 
@@ -575,137 +602,6 @@ Caso não possa comparecer, por gentileza nos informar através desse canal ou n
 Cordialmente,\n
 Central de Agendamento\n
 *BR Clube.*`
-        }
-      },
-      {
-        id: 'termo-entrega-veiculo',
-        name: 'Termo de Entrega de Veículo',
-        isTerm: true,
-        pdfType: 'entrega_veiculo',
-        parentId: 'events',
-        fields: [
-          { id: 'responsavel', label: 'Responsável do Veículo', required: true },
-          { id: 'cpf_cnpj', label: 'CPF/CNPJ', required: true },
-          { id: 'veiculo', label: 'Veículo' },
-          { id: 'ano', label: 'Ano', required: true },
-          { id: 'placa', label: 'Placa'},
-          { id: 'data_inicio', label: 'Data de Início dos Reparos', type: 'date'},
-          { id: 'data_conclusao', label: 'Data de Conclusão dos Reparos', type: 'date'},
-          { id: 'data_hoje', label: 'Data de Hoje', type: 'date'}
-        ],
-        messageTemplate: (data : any) =>{
-          const dt_hoje = formatarData(data.data_hoje);
-          const dt_inicio = formatarData(data.data_inicio);
-          const dt_conclusao = formatarData(data.data_conclusao);
-
-          return `
-          <style>
-        /* --- ESTILOS GERAIS PARA SIMULAR O PAPEL NA TELA --- */
-        body {
-            background-color: #525659; /* Cor de fundo igual visualizador de PDF */
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-        }
-
-        /* A FOLHA A4 */
-        .page {
-            background-color: white;
-            width: 210mm;
-            min-height: 297mm;
-            padding: 0 15mm; /* Margens laterais iguais ao seu projeto */
-            
-            /* Margens verticais simulam o espaço reservado para Header/Footer */
-            padding-top: 45mm;    /* Espaço do Header (35mm imagem + 10mm folga) */
-            padding-bottom: 55mm; /* Espaço do Footer (25mm imagem + 30mm folga) */
-            
-            box-sizing: border-box;
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
-            position: relative;
-        }
-
-        /* --- SIMULAÇÃO VISUAL DO HEADER/FOOTER (Só para você ver onde não pode escrever) --- */
-        .simulated-header {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 35mm;
-            background: rgba(0, 255, 255, 0.1); border-bottom: 1px dashed cyan;
-            display: flex; align-items: center; justify-content: center; color: cyan; font-weight: bold;
-        }
-        .simulated-footer {
-            position: absolute;
-            bottom: 0; left: 0; width: 100%; height: 25mm;
-            background: rgba(0, 255, 255, 0.1); border-top: 1px dashed cyan;
-            display: flex; align-items: center; justify-content: center; color: cyan; font-weight: bold;
-        }
-
-        /* --- SEU CSS DO DOCUMENTO AQUI --- */
-        /* Copie esses estilos para dentro das tags style no constants.tsx se precisar */
-        .doc-title { text-align: center; margin-bottom: 20px; font-weight: bold; font-size: 16px; text-transform: uppercase; }
-        .doc-text { text-align: justify; margin-bottom: 15px; line-height: 1.5; font-size: 14px; }
-        .section-title { text-align: center; font-weight: bold; margin: 20px 0 10px 0; font-size: 14px; text-transform: uppercase; }
-        .bold {font-weight: bold;}
-
-        table { width: 100%; border-collapse: collapse; font-size: 14px; }
-        td { vertical-align: top; padding: 5px; }
-        .col-left { width: 50%; border-right: 1px solid #ccc; }
-        .col-right { width: 50%; padding-left: 10px; }
-        
-        .signature-area { margin-top: 25px; text-align: center; font-size: 14px; }
-        .line { border-top: 1px solid black; width: 250px; margin: 0 auto 5px auto; }
-
-    </style>
-          
-          <div class="doc-title">TERMO DE ENTREGA DE VEÍCULO</div>
-
-        <div class="doc-text">
-            <strong>Responsável pelo veículo:</strong> ${data.responsavel}
-        </div>
-
-        <div class="doc-text">
-            <strong>CPF/CNPJ:</strong> ${data.cpf_cnpj}
-        </div>
-
-        <div class="doc-text">
-            <strong>Veículo:</strong> ${data.veiculo}
-        </div>
-
-        <div class="doc-text">
-            <strong>Ano:</strong> ${data.ano}
-        </div>
-
-        <div class="doc-text">
-            <strong>Placa:</strong> ${data.placa}
-        </div>
-
-        <div class="doc-text">
-            <strong>Data de início dos reparos:</strong> ${dt_inicio}
-        </div>
-
-        <div class="doc-text">
-            <strong>Data de conclusão dos reparos:</strong> ${dt_conclusao}
-        </div>
-
-        <div class="doc-text">
-            Declaração: <br><br>
-            Recebi o veículo acima identificado, devidamente reparado dos danos sofridos de objeto de
-            acidente de trânsito, outorgando a mais plena, rasa, irrevogável e irretratável quitação,
-            passada, presente e futura, para nada mais reclamar, em Juízo ou fora dele, seja a que título
-            for, renunciando expressamente a todo e qualquer outro direito que possa vir a ter em
-            decorrência do evento. <br><br>
-            Sendo este termo assinado, a quitação é dada à Br Clube, oficina reparadora e ao causador
-            do evento.
-        </div>
-
-        <div class="signature-area">
-            <div style="text-align: right; margin-bottom: 40px;">Goiânia, ${dt_hoje}</div>
-            
-            <div class="line"></div>
-            <div><strong>${data.responsavel}</strong></div>
-            
-        </div>
-        `
         }
       },
       {

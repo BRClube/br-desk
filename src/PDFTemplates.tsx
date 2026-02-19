@@ -1010,3 +1010,54 @@ export const TermoQuitacaoEventoPDF = ({ data }: { data: any }) => {
 
 
 };
+
+// ============================================================================
+// ETIQUETA DOS CORREIOS (SEM CABEÇALHO/RODAPÉ)
+// ============================================================================
+export const EtiquetaEnvioPDF = ({ data }: { data: any }) => {
+  return (
+    <Document>
+      {/* Aqui usamos a página pura, sem o BaseLayout, para ficar em branco */}
+      <Page size="A4" style={{ padding: 40, fontFamily: 'Helvetica', color: '#000' }}>
+        
+        {/* ETIQUETA DO DESTINATÁRIO (MAIOR) */}
+        <View style={{ border: '1pt solid #666', padding: 20, borderRadius: 8, backgroundColor: '#fafafa' }}>
+          <View style={{ alignItems: 'flex-start', marginBottom: 15 }}>
+            {/* Logo puxando direto do seu link publicado no GitHub Pages */}
+            <Image 
+              src="src\assets\logo.png" 
+              style={{ width: 100, height: 'auto' }} 
+            />
+          </View>
+          <Text style={{ fontSize: 14, color: '#555', textTransform: 'uppercase', marginBottom: 10 }}>
+            Destinatário
+          </Text>
+          
+          <Text style={{ fontSize: 12, marginBottom: 4, fontFamily: 'Helvetica' }}>Nome: {data.destinatario || ''}</Text>
+          <Text style={{ fontSize: 10, marginBottom: 4 }}>Endereço: {data.endereco || ''}</Text>
+          <Text style={{ fontSize: 10, marginBottom: 4 }}>CEP: {data.cep || ''}</Text>
+        </View>
+
+        {/* ETIQUETA DO REMETENTE (MENOR) */}
+        <View style={{ border: '1pt solid #666', padding: 20, borderRadius: 8, backgroundColor: '#fafafa' }}>
+          <View style={{ alignItems: 'flex-start', marginBottom: 15 }}>
+            {/* Logo puxando direto do seu link publicado no GitHub Pages */}
+            <Image 
+              src="src\assets\logo.png" 
+              style={{ width: 100, height: 'auto' }} 
+            />
+          </View>
+          <Text style={{ fontSize: 14, color: '#555', textTransform: 'uppercase', marginBottom: 10 }}>
+            Remetente
+          </Text>
+          
+          <Text style={{ fontSize: 12, marginBottom: 4, fontFamily: 'Helvetica-Bold' }}>ASSOCIAÇÃO BR CLUBE DE BENEFÍCIOS</Text>
+          <Text style={{ fontSize: 10, marginBottom: 4 }}>Edifício New Business Style: Sala 141-A</Text>
+          <Text style={{ fontSize: 10, marginBottom: 4 }}>Av. Dep. Jamel Cecílio, 2496 - Jardim Goiás, Goiânia - GO.</Text>
+          <Text style={{ fontSize: 10 }}>CEP: 74810-100 | Telefone: 4020-0164</Text>
+        </View>
+
+      </Page>
+    </Document>
+  );
+};

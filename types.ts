@@ -22,7 +22,7 @@ export interface Submodule {
   parentId: DepartmentId;
   fields?: TemplateField[];
   messageTemplate?: string | ((data: any) => string); 
-  pdfType?: 'termo_acordo' | 'cobranca' | 'recibo' | 'termo_cancelamento' | 'entrega_veiculo' | 'termo_acordo_amparo' | 'termo_recebimento_rastreador' | 'termo_pecas' | 'termo_recibo_prestador' | 'termo_recibo_estagio' | 'termo_recibo_transporte' | 'termo_recibo_cheque' | 'termo_indenizacao_pecuniaria' | 'termo_quitacao_evento';
+  pdfType?: 'termo_acordo' | 'cobranca' | 'recibo' | 'termo_cancelamento' | 'entrega_veiculo' | 'termo_acordo_amparo' | 'termo_recebimento_rastreador' | 'termo_pecas' | 'termo_recibo_prestador' | 'termo_recibo_estagio' | 'termo_recibo_transporte' | 'termo_recibo_cheque' | 'termo_indenizacao_pecuniaria' | 'termo_quitacao_evento' | 'etiqueta_envio';
   isTerm?: boolean; // Define se este módulo gera um documento formal PDF
   isBlank?: boolean; // Define se este módulo gera um documento em branco sem template
 }
