@@ -68,44 +68,45 @@ export const DEPARTMENTS: Department[] = [
     icon: 'fa-screwdriver-wrench', 
     description: 'Gestão de socorro e suporte emergencial',
     colorClass: 'bg-red-600',
+    workspaceUrl: "https://mail.google.com/mail/u/0/?tab=rm&ogbl#chat/space/AAAA31ajhm4",
     submodules: [
-      { 
-        id: 'assistance_request', 
-        name: 'Acionamento de Assistência 24H', 
-        parentId: 'assistance',
-        fields: [
-            // ... (Seus campos de assistência mantidos iguais) ...
-            { id: 'protocolo', label: 'Protocolo' },
-            { id: 'data-hora', label: 'Data e Hora', type: 'datetime-local' },
-            { id: 'placa', label: 'Placa' },
-            { id: 'modelo', label: 'Modelo' },
-            { id: 'cor', label: 'Cor' },
-            { id: 'solicitante', label: 'Solicitante' },
-            { id: 'telefone', label: 'Telefone', type: 'tel', placeholder: '(00) 00000-0000' },
-            { id: 'fator-gerador', label: 'Fator Gerador', type: 'select', options:[
-              {value: 'pane-eletrica', label: 'Pane Elétrica' },
-              {value: 'pane-mecanica', label: 'Pane Mecânica' },
-              {value: 'pane-seca', label: 'Pane Seca' },
-              {value: 'chave', label: 'Chave' },
-              {value: 'pneu', label: 'Pneu furado' },
-              {value: 'colisao', label: 'Colisão' }
-            ] },
-            { id: 'obs-gerador', label: 'Observações do Fator Gerador', type: 'textarea' },
-            { id: 'chave-documento', label: 'Chave e Documento estão no local?', type: 'select', options: [{ value: 'sim', label: 'Sim' }, { value: 'nao', label: 'Não' }] },
-            { id: 'obs_chave_documento', label: 'Observações sobre chave e documento'},
-            { id: 'facil-acesso', label: 'Veículo de fácil acesso?', type: 'select', options: [{ value: 'sim', label: 'Sim' }, { value: 'nao', label: 'Não' }] },
-            { id: 'obs_facil_acesso', label: 'Observações sobre acesso ao veículo'},
-            { id: 'servico', label: 'Serviço' },
-            { id: 'endereco-origem', label: 'Endereço de Origem' },
-            { id: 'referencia-origem', label: 'Referência de Origem' },
-            { id: 'endereco-destino', label: 'Endereço de Destino' },
-            { id: 'referencia-destino', label: 'Referência de Destino' },
-            { id: 'quilometragem', label: 'Quilometragem' },
-            { id: 'quilometragem-total', label: 'Quilometragem Total' }
-        ],
-        messageTemplate: 
-        `🚨 *BR CLUBE - NOVO ACIONAMENTO* 🚨\n\n*Protocolo:* {{protocolo}}\n*Data/Horário:* {{data-hora}}\n*Placa:* {{placa}}\n*Modelo:* {{modelo}}\n*Cor:* {{cor}}\n*Solicitante:* {{solicitante}}\n*Telefone:* {{telefone}}\n*Fator Gerador:* {{fator-gerador}}\n*Observações do Fator Gerador:* {{obs-gerador}}\n*Chave e Documento no local?:* {{chave-documento}}\n*Veículo de fácil acesso?:* {{facil-acesso}}\n*Serviço:* {{servico}}\n*Endereço de Origem:* {{endereco-origem}}\n*Referência de Origem:* {{referencia-origem}}\n*Endereço de Destino:* {{endereco-destino}}\n*Referência de Destino:* {{referencia-destino}}\n*Quilometragem:* {{quilometragem}}\n*Quilometragem Total:* {{quilometragem-total}}`
-      },
+      // { 
+      //   id: 'assistance_request', 
+      //   name: 'Acionamento de Assistência 24H', 
+      //   parentId: 'assistance',
+      //   fields: [
+      //       // ... (Seus campos de assistência mantidos iguais) ...
+      //       { id: 'protocolo', label: 'Protocolo' },
+      //       { id: 'data-hora', label: 'Data e Hora', type: 'datetime-local' },
+      //       { id: 'placa', label: 'Placa' },
+      //       { id: 'modelo', label: 'Modelo' },
+      //       { id: 'cor', label: 'Cor' },
+      //       { id: 'solicitante', label: 'Solicitante' },
+      //       { id: 'telefone', label: 'Telefone', type: 'tel', placeholder: '(00) 00000-0000' },
+      //       { id: 'fator-gerador', label: 'Fator Gerador', type: 'select', options:[
+      //         {value: 'pane-eletrica', label: 'Pane Elétrica' },
+      //         {value: 'pane-mecanica', label: 'Pane Mecânica' },
+      //         {value: 'pane-seca', label: 'Pane Seca' },
+      //         {value: 'chave', label: 'Chave' },
+      //         {value: 'pneu', label: 'Pneu furado' },
+      //         {value: 'colisao', label: 'Colisão' }
+      //       ] },
+      //       { id: 'obs-gerador', label: 'Observações do Fator Gerador', type: 'textarea' },
+      //       { id: 'chave-documento', label: 'Chave e Documento estão no local?', type: 'select', options: [{ value: 'sim', label: 'Sim' }, { value: 'nao', label: 'Não' }] },
+      //       { id: 'obs_chave_documento', label: 'Observações sobre chave e documento'},
+      //       { id: 'facil-acesso', label: 'Veículo de fácil acesso?', type: 'select', options: [{ value: 'sim', label: 'Sim' }, { value: 'nao', label: 'Não' }] },
+      //       { id: 'obs_facil_acesso', label: 'Observações sobre acesso ao veículo'},
+      //       { id: 'servico', label: 'Serviço' },
+      //       { id: 'endereco-origem', label: 'Endereço de Origem' },
+      //       { id: 'referencia-origem', label: 'Referência de Origem' },
+      //       { id: 'endereco-destino', label: 'Endereço de Destino' },
+      //       { id: 'referencia-destino', label: 'Referência de Destino' },
+      //       { id: 'quilometragem', label: 'Quilometragem' },
+      //       { id: 'quilometragem-total', label: 'Quilometragem Total' }
+      //   ],
+      //   messageTemplate: 
+      //   `🚨 *BR CLUBE - NOVO ACIONAMENTO* 🚨\n\n*Protocolo:* {{protocolo}}\n*Data/Horário:* {{data-hora}}\n*Placa:* {{placa}}\n*Modelo:* {{modelo}}\n*Cor:* {{cor}}\n*Solicitante:* {{solicitante}}\n*Telefone:* {{telefone}}\n*Fator Gerador:* {{fator-gerador}}\n*Observações do Fator Gerador:* {{obs-gerador}}\n*Chave e Documento no local?:* {{chave-documento}}\n*Veículo de fácil acesso?:* {{facil-acesso}}\n*Serviço:* {{servico}}\n*Endereço de Origem:* {{endereco-origem}}\n*Referência de Origem:* {{referencia-origem}}\n*Endereço de Destino:* {{endereco-destino}}\n*Referência de Destino:* {{referencia-destino}}\n*Quilometragem:* {{quilometragem}}\n*Quilometragem Total:* {{quilometragem-total}}`
+      // },
       { 
         id: 'abertura_assistencia', 
         name: 'Abertura de Assistência 24H', 
@@ -198,6 +199,7 @@ export const DEPARTMENTS: Department[] = [
     icon: 'fa-user-plus', 
     description: 'Gestão de cadastro de associados',
     colorClass: 'bg-blue-600',
+    workspaceUrl: "https://mail.google.com/mail/u/0/?tab=rm&ogbl#chat/space/AAAAC2NG8I4",
     submodules: [
       { 
         id: 'adesao', 
@@ -248,6 +250,7 @@ export const DEPARTMENTS: Department[] = [
     icon: 'fa-ban', 
     description: 'Cancelamento de serviços',
     colorClass: 'bg-black',
+    workspaceUrl: "https://mail.google.com/mail/u/0/?tab=rm&ogbl#chat/space/AAAA-lbewOM",
     submodules: [
       { 
         id: 'cancelamento', 
@@ -347,6 +350,7 @@ export const DEPARTMENTS: Department[] = [
     icon: 'fa-file-signature', 
     description: 'Cobrança de mensalidades e serviços',
     colorClass: 'bg-orange-600',
+    workspaceUrl: "https://mail.google.com/mail/u/0/?tab=rm&ogbl#chat/space/AAAAlM6ODqY",
     submodules: [
       { 
         id: 'mensagem_cobranca', 
@@ -529,6 +533,7 @@ export const DEPARTMENTS: Department[] = [
     icon: 'fa-bag-shopping', 
     description: 'Comunicação comercial e promoções',
     colorClass: 'bg-blue-600',
+    workspaceUrl: "https://mail.google.com/mail/u/0/?tab=rm&ogbl#chat/space/AAAA-r2DghE",
     submodules: [
        // ... MANTIVE O RESTO IGUAL ...
       { 
@@ -579,200 +584,252 @@ export const DEPARTMENTS: Department[] = [
     icon: 'fa-calendar-alt',
     description: 'Acionamento e termos de eventos',
     colorClass: 'bg-red-600',
-    submodules: [
+    workspaceUrl: "https://mail.google.com/mail/u/0/?tab=rm&ogbl#chat/space/AAAA2jUqVlg",
+    submodules: [],
+    groups: [
       {
-        id: 'agendamento-oficina',
-        name: 'Agendamento para Oficina',
-        parentId: 'events',
-        fields: [
-          { id: 'oficina', label: 'Nome da Oficina', required: true },
-          { id: 'responsavel', label: 'Nome do Responsável', required: true },
-          { id: 'servico', label: 'Tipo de Serviço' },
-          { id: 'datahr', label: 'Data/Hora', type: 'datetime-local', required: true },
-          { id: 'endereco', label: 'Endereço'}
-        ],
-        messageTemplate: (data : any) =>{
-          return `*Confirmação do seu agendamento na* ${data.oficina} *com o responsável* ${data.responsavel}.
-*Data e horário do agendamento:* ${data.datahr}
-*Serviço agendado:* ${data.servico}
-*Local:* ${data.endereco}\n
-Recomendamos a retirada dos objetos de valor de dentro de seu veículo antes do atendimento.\n
-*Obs.:* Muito importante a sua pontualidade para que possam também ser pontuais no seu atendimento.\n
-Caso não possa comparecer, por gentileza nos informar através desse canal ou no telefone 4020-0164\n
-Cordialmente,\n
-Central de Agendamento\n
-*BR Clube.*`
-        }
+        title: 'Análise',
+        items: []
       },
       {
-        id: 'termo-acionamento',
-        name: 'Termo de Acionamento (WIP)',
-        isTerm: true,
-        parentId: 'events',
-        fields: [
-          { id: 'associado', label: 'Associado', required: true },
-          { id: 'agendamento', label: 'Data e Hora da Instalação', type: 'datetime-local', required: true },
-          { id: 'tecnico', label: 'Técnico Responsável' },
-          { id: 'local', label: 'Endereço Completo', type: 'textarea', required: true }
-        ],
-        messageTemplate: `📍 *BR CLUBE - AGENDAMENTO DE RASTREIO*\n\nOlá *{{associado}}*,\nSeu agendamento para oficina foi confirmado para o dia *{{agendamento}}*.\n\n📍 Local: {{local}}\n\nTécnico Responsável: {{tecnico}}`
+        title: 'Acionamento',
+        items: [
+          {
+            id: 'termo-acionamento',
+            name: 'Termo de Acionamento (WIP)',
+            isTerm: true,
+            parentId: 'events',
+            fields: [
+              { id: 'associado', label: 'Associado', required: true },
+              { id: 'agendamento', label: 'Data e Hora da Instalação', type: 'datetime-local', required: true },
+              { id: 'tecnico', label: 'Técnico Responsável' },
+              { id: 'local', label: 'Endereço Completo', type: 'textarea', required: true }
+            ],
+            messageTemplate: `📍 *BR CLUBE - AGENDAMENTO DE RASTREIO*\n\nOlá *{{associado}}*,\nSeu agendamento para oficina foi confirmado para o dia *{{agendamento}}*.\n\n📍 Local: {{local}}\n\nTécnico Responsável: {{tecnico}}`
+          },
+        ]
       },
       {
-        id: 'termo-acordo-terceiro',
-        name: 'Termo de Acordo e Amparo (terceiro)',
-        isTerm: true,
-        pdfType: 'termo_acordo_amparo',
-        parentId: 'events',
-        fields:[
-          { id: 'terceiro', label: 'Nome do Terceiro'},
-          { id: 'cpf', label: 'CPF do Terceiro'},
-          { id: 'rg', label: 'RG do Terceiro'},
-          { id: 'data_evento', label: 'Data do Evento', type: 'date'},
-          { id: 'boletim_ocorrencia', label: 'Nº Boletim de Ocorrência'},
-          { id: 'marca', label: 'Marca do Carro do Associado'},
-          { id: 'modelo', label: 'Modelo do Carro do Associado'},
-          { id: 'ano', label: 'Ano do Carro do Associado'},
-          { id: 'placa', label: 'Placa do Carro do Associado'},
-          { id: 'cor', label: 'Cor do Carro do Associado'},
-          { id: 'valor', label: 'Valor do Reembolso'},
-          { id: 'valor_extenso', label: 'Valor por extenso'},
-          { id: 'pix', label: 'Chave Pix do Terceiro'},
-          { id: 'data_hoje', label: 'Data de Hoje', type: 'date'}
-        ],
-        messageTemplate: (data : any) =>{
-
-          return `
-          <style>
-            .doc-title { text-align: center; margin-bottom: 20px; font-weight: bold; font-size: 16px; text-transform: uppercase; }
-            .doc-subtitle { text-align: start; margin-bottom: 20px; font-weight: bold; font-size: 16px; text-transform: uppercase; }
-            .doc-text { text-align: justify; margin-bottom: 20px; line-height: 1.5; font-size: 14px; }
-            .section-title { text-align: center; font-weight: bold; margin: 20px 0 10px 0; font-size: 14px; text-transform: uppercase; }
-            .bold {font-weight: bold;}
-
-            table { width: 100%; border-collapse: collapse; font-size: 14px; }
-            td { vertical-align: top; padding: 5px; }
-            .col-left { width: 50%; border-right: 1px solid #ccc; }
-            .col-right { width: 50%; padding-left: 10px; }
-            
-            .signature-area { margin-top: 50px; text-align: center; font-size: 14px; }
-            .line { border-top: 1px solid black; width: 250px; margin: 0 auto 5px auto; }
-
-          </style>
-
-          <h1 class="doc-title">
-            TERMO DE ACORDO E AMPARO
-        </h1>
-
-       <p class="doc-text">
-            Por este instrumento, a <strong>ASSOCIAÇÃO BR CLUBE DE BENEFÍCIOS</strong>, pessoa jurídica
-            de direito privado, CNPJ no 40.410.992/0001-40, com sede na Avenida Deputado
-            Jamel Cecílio, no 2496, Jardim Goiás, Município de Goiânia, Estado de Goiás, e, de
-            outro lado, o terceiro, <strong>${data.terceiro}</strong>, brasileiro, inscrita sob o CPF
-            no ${data.cpf}, portador do RG no ${data.rg} DGPC GO, ajustam, entre si, o
-            seguinte termo de amparo:
-       </p>
-
-       <p class="doc-text">
-            A BR CLUBE é um grupo associativo que realiza a divisão das despesas passadas e
-            ocorridas entre seus membros. A ela recai a responsabilidade de amparar os danos
-            sofridos e causados por seus associados, sendo, contudo, respeitados os limites e
-            condições determinadas pelo Regulamento Interno e nos termos do Art. 421, do
-            Código Civil.
-       </p>
-
-       <p class="doc-text">
-            Considerando o evento de acidente de trânsito ocorrido em <strong>${data.data_evento}</strong>, lavrado pelo
-            Boletim de Ocorrência no <strong>${data.boletim}</strong>, envolvendo o veículo do <strong>ASSOCIADO</strong> marca
-            <strong>${data.marca}</strong>, modelo <strong>${data.modelo}</strong>, ano <strong>${data.ano}</strong>, placa <strong>${data.placa}</strong>, cor <strong>${data.cor}</strong>, a BR CLUBE
-            compromete-se a reembolsar o terceiro <strong>${data.terceiro}</strong> no montante
-            de <strong>R$ ${data.valor} (${data.valor_extenso})</strong>, a fim de reiterar a boa-fé e o
-            compromisso com o bom atendimento de nossos associados e terceiros.
-       </p>
-
-       <p class="doc-subtitle">
-            FORMA DE PAGAMENTO
-       </p>
-
-       <p class="doc-text">
-            A quitação do valor será realizada exclusivamente por meio de transferência via PIX,
-            utilizando a chave PIX do terceiro, que corresponde à chave <strong>${data.pix}</strong>.
-            Com o pagamento supracitado, o <strong>terceiro ${data.terceiro}</strong>
-            reconhece, com fulcro no Art. 320, do Código Civil, não ter mais direito algum além do
-            que ora recebe, dando à BR CLUBE a mais plena, rasa, irrevogável e irretratável
-            quitação quanto a todas as despesas originadas do evento noticiado no Boletim de
-            Ocorrência acima referido, passada, presente e futura, para nada mais reclamar, em
-            Juízo ou fora dele, seja a que título for, renunciando expressamente a todo e qualquer
-            outro direito ou fato que possa vir a ter em decorrência do presente evento,
-            responsabilizando-se integralmente por qualquer medida que o associado ou qualquer
-            outro interessado venha a interpor face ao referido evento no que pertine ao referido
-            veículo.
-       </p>
-
-       <p class="doc-text">
-            Por fim, nos termos do Art. 104 do Código Civil, cumpre-se que ambas as partes são
-            capazes e que o presente acordo ocorreu sem nenhum vício, reconhecendo que a BR
-            CLUBE cumpriu integralmente o que se comprometeu por meio de seu Regulamento
-            Interno, não tendo mais, ambas as partes, nada a reclamar, conforme já mencionado,
-            em tempo algum, sobre os respectivos valores, títulos e condições.
-       </p>
-
-        <div class="signature-area">
-            <div style="text-align: right; margin-bottom: 40px;">Goiânia, ${data.data_hoje}</div>
-            
-            <div class="line"></div>
-            <div><strong>${data.terceiro}</strong></div>
-
-            <img src="/images/assinatura.png" style="width: 200px; margin-top: 40px;">
-        </div>
-          `
-
-        }
+        title: 'Regulação',
+        items: [
+          {
+            id: 'agendamento-oficina',
+            name: 'Agendamento para Oficina',
+            parentId: 'events',
+            fields: [
+              { id: 'oficina', label: 'Nome da Oficina', required: true },
+              { id: 'responsavel', label: 'Nome do Responsável', required: true },
+              { id: 'servico', label: 'Tipo de Serviço' },
+              { id: 'datahr', label: 'Data/Hora', type: 'datetime-local', required: true },
+              { id: 'endereco', label: 'Endereço'}
+            ],
+            messageTemplate: (data : any) =>{
+              return `*Confirmação do seu agendamento na* ${data.oficina} *com o responsável* ${data.responsavel}.
+      *Data e horário do agendamento:* ${data.datahr}
+      *Serviço agendado:* ${data.servico}
+      *Local:* ${data.endereco}\n
+      Recomendamos a retirada dos objetos de valor de dentro de seu veículo antes do atendimento.\n
+      *Obs.:* Muito importante a sua pontualidade para que possam também ser pontuais no seu atendimento.\n
+      Caso não possa comparecer, por gentileza nos informar através desse canal ou no telefone 4020-0164\n
+      Cordialmente,\n
+      Central de Agendamento\n
+      *BR Clube.*`
+            }
+          },
+        ]
       },
       {
-        id: 'termo_entrega_pecas',
-        name: 'Termo de Entrega e Recebimento de Peças',
-        isTerm: true,
-        pdfType: 'termo_pecas',
-        parentId: 'events',
-        fields:[
-          { id: 'terc_assoc', label: 'Terceiro ou Associado', type: 'select', options: [
-            {value: 'terceiro', label: 'Terceiro'},
-            {value: 'associado', label: 'Associado'}
-          ]},
-          { id: 'responsavel', label: 'Responsável pelo Recebimento'},
-          { id: 'cpf', label: 'CPF'},
-          { id: 'cargo', label: 'Cargo/Função'},
-          { id: 'associado', label: 'Nome do Associado/Terceiro'},
-          { id: 'placa', label: 'Placa'},
-          { id: 'marca_modelo', label: 'Marca/Modelo'},
-          { id: 'pecas', label: 'Pecas', type: 'repeater', subFields: [
-            { id: 'item', label: 'Item'},
-            { id: 'codigo', label: 'Código'},
-            { id: 'produto', label: 'Produto'},
-            { id: 'quantidade', label: 'Quantidade'},
-            { id: 'valor', label: 'Valor'}
-          ]},
-          { id: 'data_hoje', label: 'Data de Hoje', type: 'date'}
-        ],
-        messageTemplate: ''
+        title: 'Amparo',
+        items: [
+          {
+            id: 'termo_quitacao_evento',
+            name: 'Termo de Quitação de Evento',
+            isTerm: true,
+            pdfType: 'termo_quitacao_evento',
+            parentId: 'events',
+            fields:[
+              { id: 'responsavel', label: 'Responsável Pelo Veículo'},
+              { id: 'cpf_cnpj', label: 'CPF/CNPJ'},
+              { id: 'veiculo', label: 'Veículo', placeholder: 'Ex: FORD KA TRAIL 1.0 12V FLEX MEC. 5P'},
+              { id: 'ano', label: 'Ano'},
+              { id: 'placa', label: 'Placa'},
+              { id: 'data_inicio', label: 'Data de Início dos Reparos', type: 'date'},
+              { id: 'data_conclusao', label: 'Data de Conclusão dos Reparos', type: 'date'},
+              { id: 'data_hoje', label: 'Data do Contrato', type: 'date'}
+            ],
+            messageTemplate: ''
+          },
+          {
+            id: 'termo_entrega_pecas',
+            name: 'Termo de Entrega e Recebimento de Peças',
+            isTerm: true,
+            pdfType: 'termo_pecas',
+            parentId: 'events',
+            fields:[
+              { id: 'terc_assoc', label: 'Terceiro ou Associado', type: 'select', options: [
+                {value: 'terceiro', label: 'Terceiro'},
+                {value: 'associado', label: 'Associado'}
+              ]},
+              { id: 'responsavel', label: 'Responsável pelo Recebimento'},
+              { id: 'cpf', label: 'CPF'},
+              { id: 'cargo', label: 'Cargo/Função'},
+              { id: 'associado', label: 'Nome do Associado/Terceiro'},
+              { id: 'placa', label: 'Placa'},
+              { id: 'marca_modelo', label: 'Marca/Modelo'},
+              { id: 'pecas', label: 'Pecas', type: 'repeater', subFields: [
+                { id: 'item', label: 'Item'},
+                { id: 'codigo', label: 'Código'},
+                { id: 'produto', label: 'Produto'},
+                { id: 'quantidade', label: 'Quantidade'},
+                { id: 'valor', label: 'Valor'}
+              ]},
+              { id: 'data_hoje', label: 'Data de Hoje', type: 'date'}
+            ],
+            messageTemplate: ''
+          },
+          {
+            id: 'termo-acordo-terceiro',
+            name: 'Termo de Acordo e Amparo (terceiro)',
+            isTerm: true,
+            pdfType: 'termo_acordo_amparo',
+            parentId: 'events',
+            fields:[
+              { id: 'terceiro', label: 'Nome do Terceiro'},
+              { id: 'cpf', label: 'CPF do Terceiro'},
+              { id: 'rg', label: 'RG do Terceiro'},
+              { id: 'data_evento', label: 'Data do Evento', type: 'date'},
+              { id: 'boletim_ocorrencia', label: 'Nº Boletim de Ocorrência'},
+              { id: 'marca', label: 'Marca do Carro do Associado'},
+              { id: 'modelo', label: 'Modelo do Carro do Associado'},
+              { id: 'ano', label: 'Ano do Carro do Associado'},
+              { id: 'placa', label: 'Placa do Carro do Associado'},
+              { id: 'cor', label: 'Cor do Carro do Associado'},
+              { id: 'valor', label: 'Valor do Reembolso'},
+              { id: 'valor_extenso', label: 'Valor por extenso'},
+              { id: 'pix', label: 'Chave Pix do Terceiro'},
+              { id: 'data_hoje', label: 'Data de Hoje', type: 'date'}
+            ],
+            messageTemplate: (data : any) =>{
+
+              return `
+              <style>
+                .doc-title { text-align: center; margin-bottom: 20px; font-weight: bold; font-size: 16px; text-transform: uppercase; }
+                .doc-subtitle { text-align: start; margin-bottom: 20px; font-weight: bold; font-size: 16px; text-transform: uppercase; }
+                .doc-text { text-align: justify; margin-bottom: 20px; line-height: 1.5; font-size: 14px; }
+                .section-title { text-align: center; font-weight: bold; margin: 20px 0 10px 0; font-size: 14px; text-transform: uppercase; }
+                .bold {font-weight: bold;}
+
+                table { width: 100%; border-collapse: collapse; font-size: 14px; }
+                td { vertical-align: top; padding: 5px; }
+                .col-left { width: 50%; border-right: 1px solid #ccc; }
+                .col-right { width: 50%; padding-left: 10px; }
+                
+                .signature-area { margin-top: 50px; text-align: center; font-size: 14px; }
+                .line { border-top: 1px solid black; width: 250px; margin: 0 auto 5px auto; }
+
+              </style>
+
+              <h1 class="doc-title">
+                TERMO DE ACORDO E AMPARO
+            </h1>
+
+          <p class="doc-text">
+                Por este instrumento, a <strong>ASSOCIAÇÃO BR CLUBE DE BENEFÍCIOS</strong>, pessoa jurídica
+                de direito privado, CNPJ no 40.410.992/0001-40, com sede na Avenida Deputado
+                Jamel Cecílio, no 2496, Jardim Goiás, Município de Goiânia, Estado de Goiás, e, de
+                outro lado, o terceiro, <strong>${data.terceiro}</strong>, brasileiro, inscrita sob o CPF
+                no ${data.cpf}, portador do RG no ${data.rg} DGPC GO, ajustam, entre si, o
+                seguinte termo de amparo:
+          </p>
+
+          <p class="doc-text">
+                A BR CLUBE é um grupo associativo que realiza a divisão das despesas passadas e
+                ocorridas entre seus membros. A ela recai a responsabilidade de amparar os danos
+                sofridos e causados por seus associados, sendo, contudo, respeitados os limites e
+                condições determinadas pelo Regulamento Interno e nos termos do Art. 421, do
+                Código Civil.
+          </p>
+
+          <p class="doc-text">
+                Considerando o evento de acidente de trânsito ocorrido em <strong>${data.data_evento}</strong>, lavrado pelo
+                Boletim de Ocorrência no <strong>${data.boletim}</strong>, envolvendo o veículo do <strong>ASSOCIADO</strong> marca
+                <strong>${data.marca}</strong>, modelo <strong>${data.modelo}</strong>, ano <strong>${data.ano}</strong>, placa <strong>${data.placa}</strong>, cor <strong>${data.cor}</strong>, a BR CLUBE
+                compromete-se a reembolsar o terceiro <strong>${data.terceiro}</strong> no montante
+                de <strong>R$ ${data.valor} (${data.valor_extenso})</strong>, a fim de reiterar a boa-fé e o
+                compromisso com o bom atendimento de nossos associados e terceiros.
+          </p>
+
+          <p class="doc-subtitle">
+                FORMA DE PAGAMENTO
+          </p>
+
+          <p class="doc-text">
+                A quitação do valor será realizada exclusivamente por meio de transferência via PIX,
+                utilizando a chave PIX do terceiro, que corresponde à chave <strong>${data.pix}</strong>.
+                Com o pagamento supracitado, o <strong>terceiro ${data.terceiro}</strong>
+                reconhece, com fulcro no Art. 320, do Código Civil, não ter mais direito algum além do
+                que ora recebe, dando à BR CLUBE a mais plena, rasa, irrevogável e irretratável
+                quitação quanto a todas as despesas originadas do evento noticiado no Boletim de
+                Ocorrência acima referido, passada, presente e futura, para nada mais reclamar, em
+                Juízo ou fora dele, seja a que título for, renunciando expressamente a todo e qualquer
+                outro direito ou fato que possa vir a ter em decorrência do presente evento,
+                responsabilizando-se integralmente por qualquer medida que o associado ou qualquer
+                outro interessado venha a interpor face ao referido evento no que pertine ao referido
+                veículo.
+          </p>
+
+          <p class="doc-text">
+                Por fim, nos termos do Art. 104 do Código Civil, cumpre-se que ambas as partes são
+                capazes e que o presente acordo ocorreu sem nenhum vício, reconhecendo que a BR
+                CLUBE cumpriu integralmente o que se comprometeu por meio de seu Regulamento
+                Interno, não tendo mais, ambas as partes, nada a reclamar, conforme já mencionado,
+                em tempo algum, sobre os respectivos valores, títulos e condições.
+          </p>
+
+            <div class="signature-area">
+                <div style="text-align: right; margin-bottom: 40px;">Goiânia, ${data.data_hoje}</div>
+                
+                <div class="line"></div>
+                <div><strong>${data.terceiro}</strong></div>
+
+                <img src="/images/assinatura.png" style="width: 200px; margin-top: 40px;">
+            </div>
+              `
+
+            }
+          },
+          {
+            id: 'termo_inden_pecun',
+            name: 'Termo de Indenização Pecuniária',
+            isTerm: true,
+            pdfType: 'termo_indenizacao_pecuniaria',
+            parentId: 'financing',
+            fields: [
+              { id: 'terceiro_nome', label: 'Nome Completo do Terceiro', required: true },
+              { id: 'terceiro_nacionalidade', label: 'Nacionalidade', placeholder: 'Ex: brasileiro' },
+              { id: 'terceiro_cpf', label: 'CPF do Terceiro', required: true },
+              { id: 'terceiro_rg', label: 'RG do Terceiro', required: true },
+              { id: 'terceiro_endereco', label: 'Endereço Completo (Rua, Qd, Lt, Bairro, Cidade)', type: 'textarea', required: true },
+              { id: 'data_evento', label: 'Data do Acidente', type: 'date', required: true },
+              { id: 'numero_boletim', label: 'Nº Boletim de Ocorrência', required: true },
+              { id: 'veiculo_marca', label: 'Marca do Veículo' },
+              { id: 'veiculo_modelo', label: 'Modelo do Veículo' },
+              { id: 'veiculo_ano', label: 'Ano do Veículo' },
+              { id: 'veiculo_placa', label: 'Placa do Veículo', required: true },
+              { id: 'veiculo_cor', label: 'Cor do Veículo' },
+              { id: 'valor_total', label: 'Valor Total da Indenização (R$)', required: true },
+              { id: 'valor_extenso', label: 'Valor por Extenso', placeholder: 'Ex: dois mil e cento e dez reais', required: true },
+              { id: 'condicoes_pagamento', label: 'Condições de Pagamento (Texto descritivo)', type: 'textarea', placeholder: 'Ex: da entrega de três cheques, com valor de R$ 703,00 cada um, com vencimentos subsequentes...', required: true },
+              { id: 'data_hoje', label: 'Data da Assinatura', type: 'date', required: true }
+            ]
+          }
+        ]
       },
       {
-        id: 'termo_quitacao_evento',
-        name: 'Termo de Quitação de Evento',
-        isTerm: true,
-        pdfType: 'termo_quitacao_evento',
-        parentId: 'events',
-        fields:[
-          { id: 'responsavel', label: 'Responsável Pelo Veículo'},
-          { id: 'cpf_cnpj', label: 'CPF/CNPJ'},
-          { id: 'veiculo', label: 'Veículo', placeholder: 'Ex: FORD KA TRAIL 1.0 12V FLEX MEC. 5P'},
-          { id: 'ano', label: 'Ano'},
-          { id: 'placa', label: 'Placa'},
-          { id: 'data_inicio', label: 'Data de Início dos Reparos', type: 'date'},
-          { id: 'data_conclusao', label: 'Data de Conclusão dos Reparos', type: 'date'},
-          { id: 'data_hoje', label: 'Data do Contrato', type: 'date'}
-        ],
-        messageTemplate: ''
+        title: 'Outros',
+        items: [
+          
+        ]
       }
     ]
   },
@@ -782,100 +839,111 @@ Central de Agendamento\n
     icon: 'fa-sack-dollar',
     description: 'Termos e Recibos Financeiros',
     colorClass: 'bg-green-600',
-    submodules: [
-      {
-        id: 'recibo_prestador',
-        name: 'Recibo de Pagamento Prestador de Serviço',
-        isTerm: true,
-        pdfType: 'termo_recibo_prestador',
-        parentId: 'financing',
-        fields: [
-          { id: 'prestador', label: 'Prestador'},
-          { id: 'tipo_pessoa', label: 'Tipo de Pessoa', type: 'select', options: [
-            { value: 'pj', label: 'Pessoa Jurídica'},
-            { value: 'pf', label: 'Pessoa Física'}
-          ]},
-          { id: 'cnpj_cpf', label: 'CPF ou CNPJ'},
-          { id: 'valor', label: 'Valor', type: 'number'},
-          { id: 'valor_extenso', label: 'Valor por Extenso'},
-          { id: 'servico', label: 'Serviço Prestado'},
-          { id: 'associado', label: 'Associado'},
-          { id: 'placa', label: 'Placa'},
-          { id: 'data_servico', label: 'Data do Serviço', type: 'date'},
-          { id: 'data_hoje', label: 'Data de Hoje', type: 'date'}
+    workspaceUrl: "https://chat.google.com/room/AAAA5t--cXw?cls=7",
+    submodules: [],
+    groups: [
+      {title: 'Recibos', 
+        items: [
+          {
+            id: 'recibo_prestador',
+            name: 'Recibo de Pagamento Prestador de Serviço',
+            isTerm: true,
+            pdfType: 'termo_recibo_prestador',
+            parentId: 'financing',
+            fields: [
+              { id: 'prestador', label: 'Prestador'},
+              { id: 'tipo_pessoa', label: 'Tipo de Pessoa', type: 'select', options: [
+                { value: 'pj', label: 'Pessoa Jurídica'},
+                { value: 'pf', label: 'Pessoa Física'}
+              ]},
+              { id: 'cnpj_cpf', label: 'CPF ou CNPJ'},
+              { id: 'valor', label: 'Valor', type: 'number'},
+              { id: 'valor_extenso', label: 'Valor por Extenso'},
+              { id: 'servico', label: 'Serviço Prestado'},
+              { id: 'associado', label: 'Associado'},
+              { id: 'placa', label: 'Placa'},
+              { id: 'data_servico', label: 'Data do Serviço', type: 'date'},
+              { id: 'data_hoje', label: 'Data de Hoje', type: 'date'}
+            ]
+          },
+          {
+            id: 'recibo_estagio',
+            name: 'Recibo de Pagamento Bolsa Estágio',
+            isTerm: true,
+            pdfType: 'termo_recibo_estagio',
+            parentId: 'financing',
+            fields: [
+              { id: 'estagiario', label: 'Estagiário'},
+              { id: 'cpf', label: 'CPF'},
+              { id: 'valor', label: 'Valor', type: 'number'},
+              { id: 'valor_extenso', label: 'Valor por Extenso'},
+              { id: 'data_hoje', label: 'Data de Hoje', type: 'date'}
+            ]
+          },
+          {
+            id: 'recibo_vale_transporte',
+            name: 'Recibo de Vale Transporte',
+            isTerm: true,
+            pdfType: 'termo_recibo_transporte',
+            parentId: 'financing',
+            fields: [
+              { id: 'estagiario', label: 'Estagiário'},
+              { id: 'cpf', label: 'CPF'},
+              { id: 'valor', label: 'Valor', type: 'number'},
+              { id: 'valor_extenso', label: 'Valor por Extenso'},
+              { id: 'data_hoje', label: 'Data de Hoje', type: 'date'}
+            ]
+          },
         ]
       },
       {
-        id: 'recibo_estagio',
-        name: 'Recibo de Pagamento Bolsa Estágio',
-        isTerm: true,
-        pdfType: 'termo_recibo_estagio',
-        parentId: 'financing',
-        fields: [
-          { id: 'estagiario', label: 'Estagiário'},
-          { id: 'cpf', label: 'CPF'},
-          { id: 'valor', label: 'Valor', type: 'number'},
-          { id: 'valor_extenso', label: 'Valor por Extenso'},
-          { id: 'data_hoje', label: 'Data de Hoje', type: 'date'}
+        title: 'Termos',
+        items: [
+          {
+            id: 'termo_cheques',
+            name: 'Termo de Entrega de Cheques',
+            isTerm: true,
+            pdfType: 'termo_recibo_cheque',
+            parentId: 'financing',
+            fields: [
+              { id: 'prestador', label: 'Prestador'},
+              { id: 'tipo_pessoa', label: 'Tipo de Pessoa', type: 'select', options: [
+                { value: 'pj', label: 'Pessoa Jurídica'},
+                { value: 'pf', label: 'Pessoa Física'}
+              ]},
+              { id: 'cnpj_cpf', label: 'CPF ou CNPJ'},
+              { id: 'valor', label: 'Valor', type: 'number'},
+              { id: 'valor_extenso', label: 'Valor por Extenso'},
+              { id: 'data_hoje', label: 'Data de Hoje', type: 'date'}
+            ]
+          },
+          {
+            id: 'termo_inden_pecun',
+            name: 'Termo de Indenização Pecuniária',
+            isTerm: true,
+            pdfType: 'termo_indenizacao_pecuniaria',
+            parentId: 'financing',
+            fields: [
+              { id: 'terceiro_nome', label: 'Nome Completo do Terceiro', required: true },
+              { id: 'terceiro_nacionalidade', label: 'Nacionalidade', placeholder: 'Ex: brasileiro' },
+              { id: 'terceiro_cpf', label: 'CPF do Terceiro', required: true },
+              { id: 'terceiro_rg', label: 'RG do Terceiro', required: true },
+              { id: 'terceiro_endereco', label: 'Endereço Completo (Rua, Qd, Lt, Bairro, Cidade)', type: 'textarea', required: true },
+              { id: 'data_evento', label: 'Data do Acidente', type: 'date', required: true },
+              { id: 'numero_boletim', label: 'Nº Boletim de Ocorrência', required: true },
+              { id: 'veiculo_marca', label: 'Marca do Veículo' },
+              { id: 'veiculo_modelo', label: 'Modelo do Veículo' },
+              { id: 'veiculo_ano', label: 'Ano do Veículo' },
+              { id: 'veiculo_placa', label: 'Placa do Veículo', required: true },
+              { id: 'veiculo_cor', label: 'Cor do Veículo' },
+              { id: 'valor_total', label: 'Valor Total da Indenização (R$)', required: true },
+              { id: 'valor_extenso', label: 'Valor por Extenso', placeholder: 'Ex: dois mil e cento e dez reais', required: true },
+              { id: 'condicoes_pagamento', label: 'Condições de Pagamento (Texto descritivo)', type: 'textarea', placeholder: 'Ex: da entrega de três cheques, com valor de R$ 703,00 cada um, com vencimentos subsequentes...', required: true },
+              { id: 'data_hoje', label: 'Data da Assinatura', type: 'date', required: true }
+            ]
+          }
         ]
-      },
-      {
-        id: 'recibo_vale_transporte',
-        name: 'Recibo de Vale Transporte',
-        isTerm: true,
-        pdfType: 'termo_recibo_transporte',
-        parentId: 'financing',
-        fields: [
-          { id: 'estagiario', label: 'Estagiário'},
-          { id: 'cpf', label: 'CPF'},
-          { id: 'valor', label: 'Valor', type: 'number'},
-          { id: 'valor_extenso', label: 'Valor por Extenso'},
-          { id: 'data_hoje', label: 'Data de Hoje', type: 'date'}
-        ]
-      },
-      {
-        id: 'termo_cheques',
-        name: 'Termo de Entrega de Cheques',
-        isTerm: true,
-        pdfType: 'termo_recibo_cheque',
-        parentId: 'financing',
-        fields: [
-          { id: 'prestador', label: 'Prestador'},
-          { id: 'tipo_pessoa', label: 'Tipo de Pessoa', type: 'select', options: [
-            { value: 'pj', label: 'Pessoa Jurídica'},
-            { value: 'pf', label: 'Pessoa Física'}
-          ]},
-          { id: 'cnpj_cpf', label: 'CPF ou CNPJ'},
-          { id: 'valor', label: 'Valor', type: 'number'},
-          { id: 'valor_extenso', label: 'Valor por Extenso'},
-          { id: 'data_hoje', label: 'Data de Hoje', type: 'date'}
-        ]
-      },
-      {
-        id: 'termo_inden_pecun',
-        name: 'Termo de Indenização Pecuniária',
-        isTerm: true,
-        pdfType: 'termo_indenizacao_pecuniaria',
-        parentId: 'financing',
-        fields: [
-          { id: 'terceiro_nome', label: 'Nome Completo do Terceiro', required: true },
-          { id: 'terceiro_nacionalidade', label: 'Nacionalidade', placeholder: 'Ex: brasileiro' },
-          { id: 'terceiro_cpf', label: 'CPF do Terceiro', required: true },
-          { id: 'terceiro_rg', label: 'RG do Terceiro', required: true },
-          { id: 'terceiro_endereco', label: 'Endereço Completo (Rua, Qd, Lt, Bairro, Cidade)', type: 'textarea', required: true },
-          { id: 'data_evento', label: 'Data do Acidente', type: 'date', required: true },
-          { id: 'numero_boletim', label: 'Nº Boletim de Ocorrência', required: true },
-          { id: 'veiculo_marca', label: 'Marca do Veículo' },
-          { id: 'veiculo_modelo', label: 'Modelo do Veículo' },
-          { id: 'veiculo_ano', label: 'Ano do Veículo' },
-          { id: 'veiculo_placa', label: 'Placa do Veículo', required: true },
-          { id: 'veiculo_cor', label: 'Cor do Veículo' },
-          { id: 'valor_total', label: 'Valor Total da Indenização (R$)', required: true },
-          { id: 'valor_extenso', label: 'Valor por Extenso', placeholder: 'Ex: dois mil e cento e dez reais', required: true },
-          { id: 'condicoes_pagamento', label: 'Condições de Pagamento (Texto descritivo)', type: 'textarea', placeholder: 'Ex: da entrega de três cheques, com valor de R$ 703,00 cada um, com vencimentos subsequentes...', required: true },
-          { id: 'data_hoje', label: 'Data da Assinatura', type: 'date', required: true }
-        ]
-      }
+        }
     ]
   },
   {
@@ -884,6 +952,7 @@ Central de Agendamento\n
     icon: 'fa-satellite-dish',
     description: 'Agendamento e termos de rastreamento',
     colorClass: 'bg-yellow-600',
+    workspaceUrl: "https://mail.google.com/mail/u/0/?tab=rm&ogbl#chat/space/AAAAE-WFzcg",
     submodules: [
       {
         id: 'termo-recebimento-rastreador',
@@ -1015,6 +1084,7 @@ Central de Agendamento\n
             { value: 'manutencao', label: 'Manutenção'}
           ]},
           { id: 'local_instalado', label: 'Local Instalado', showIf: {field: 'tipo_protocolo', value: 'desinstalacao'}},
+          { id: 'local_instalado', label: 'Local Instalado', showIf: {field: 'tipo_protocolo', value: 'manutencao'}},
           //{ id: 'protocolo', label: 'Protocolo'},
           { id: 'nome', label: 'Nome Completo'},
           { id: 'cpf_cnpj', label: 'CPF/CNPJ'},
@@ -1073,6 +1143,8 @@ Central de Agendamento\n
 *Renavam:* ${data.renavam || ''}
 
 *Chassi:* ${data.chassi || ''}
+
+${data.local_instalado ? `*Local Instalado:* ${data.local_instalado || ''}\n` : ''}
 
 *N.º do EMEI:* ${data.imei || ''}
 

@@ -186,7 +186,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeDept, activeSubmodule, 
                 >
                   <div className="flex items-center space-x-3">
                     <i className="fa-solid fa-link text-base w-6 text-center"></i>
-                    {!isCollapsed && <span className="font-bold text-sm truncate">Links Úteis</span>}
+                    {!isCollapsed && <span className="font-bold text-sm truncate">Ferramentas</span>}
                   </div>
                   {!isCollapsed && (
                     <i className={`fa-solid fa-chevron-down text-[10px] transition-transform duration-300 ${isLinksExpanded ? 'rotate-180 text-cyan-500' : 'opacity-30'}`}></i>

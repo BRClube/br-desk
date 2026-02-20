@@ -43,7 +43,8 @@ export interface Department {
   description: string;
   colorClass: string;
   submodules: Submodule[];
-  groups?: { name: string; items: Submodule[] }[];
+  groups?: { title: string; items: Submodule[] }[];
+  workspaceUrl?: string;
 }
 
 export interface UsefulLink {

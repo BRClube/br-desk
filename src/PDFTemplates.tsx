@@ -449,7 +449,8 @@ export const TermoRecebimentoRastreadorPDF = ({data }: {data: any }) => {
     <Document>
       <BaseLayout>
         <Text style={styles.title}>
-          TERMO DE RECEBIMENTO E RESPONSABILIDADE COM EQUIPAMENTO DE RASTREAMENTO
+          TERMO DE RECEBIMENTO E RESPONSABILIDADE{"\n"}
+          COM EQUIPAMENTO DE RASTREAMENTO
         </Text>
 
         <Text style={styles.paragraph}>

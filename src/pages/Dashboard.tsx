@@ -20,6 +20,35 @@ const WEBHOOKS = {
   PADRAO: "https://chat.googleapis.com/v1/spaces/AAQA_9VXbIs/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=xYp-47r0nPVdhG8o2MDBdnnhfDDpz-XV78N0OP91oyw",
 };
 
+// Função para mapear as cores dos departamentos para os botões internos
+const getThemeStyles = (bgClass?: string) => {
+  const colorMap = bgClass || 'cyan'; // Padrão é cyan
+
+  if (colorMap.includes('rose') || colorMap.includes('red')) 
+    return { text: 'group-hover:text-rose-600', border: 'hover:border-rose-400', bgLight: 'hover:bg-rose-50/50', bgSolid: 'group-hover:bg-rose-500' };
+  
+  if (colorMap.includes('orange')) 
+    return { text: 'group-hover:text-orange-600', border: 'hover:border-orange-400', bgLight: 'hover:bg-orange-50/50', bgSolid: 'group-hover:bg-orange-500' };
+  
+  if (colorMap.includes('amber') || colorMap.includes('yellow')) 
+    return { text: 'group-hover:text-amber-600', border: 'hover:border-amber-400', bgLight: 'hover:bg-amber-50/50', bgSolid: 'group-hover:bg-amber-500' };
+  
+  if (colorMap.includes('emerald') || colorMap.includes('green')) 
+    return { text: 'group-hover:text-emerald-600', border: 'hover:border-emerald-400', bgLight: 'hover:bg-emerald-50/50', bgSolid: 'group-hover:bg-emerald-500' };
+  
+  if (colorMap.includes('blue')) 
+    return { text: 'group-hover:text-blue-600', border: 'hover:border-blue-400', bgLight: 'hover:bg-blue-50/50', bgSolid: 'group-hover:bg-blue-500' };
+  
+  if (colorMap.includes('purple')) 
+    return { text: 'group-hover:text-purple-600', border: 'hover:border-purple-400', bgLight: 'hover:bg-purple-50/50', bgSolid: 'group-hover:bg-purple-500' };
+
+  if (colorMap.includes('black') || colorMap.includes('slate') || colorMap.includes('gray') || colorMap.includes('zinc')) 
+    return { text: 'group-hover:text-slate-800', border: 'hover:border-slate-400', bgLight: 'hover:bg-slate-100', bgSolid: 'group-hover:bg-slate-800' };
+
+  // Padrão (Cyan)
+  return { text: 'group-hover:text-cyan-600', border: 'hover:border-cyan-400', bgLight: 'hover:bg-cyan-50/50', bgSolid: 'group-hover:bg-cyan-500' };
+};
+
 const Dashboard: React.FC = () => {
   const { logout, profile } = useAuth();
 
@@ -478,24 +507,40 @@ const Dashboard: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-        {visibleDepartments.map((dept) => (
-          <button
-            key={dept.id}
-            onClick={() => handleNavigate(dept.id, null)}
-            className="group relative bg-white py-8 px-10 rounded-[32px] border border-cyan-100 shadow-[0_20px_50px_rgba(6,182,212,0.05)] transition-all duration-500 text-center animate-in fade-in slide-in-from-bottom-8 flex flex-col items-center hover:-translate-y-3 hover:shadow-[0_30px_60px_rgba(6,182,212,0.1)] overflow-hidden"
-          >
-            <div className={`absolute top-0 left-0 right-0 h-1.5 ${dept.colorClass}`}></div>
-            <div className={`w-16 h-16 bg-slate-50 group-hover:${dept.colorClass} group-hover:text-white rounded-[20px] flex items-center justify-center mb-6 transition-all duration-500 shadow-inner group-hover:shadow-2xl`}>
-              <i className={`fa-solid ${dept.icon} text-2xl`}></i>
-            </div>
-            <h3 className="text-xl font-[900] text-slate-800 group-hover:text-cyan-600 transition-colors tracking-tight mb-3">
-              {dept.name}
-            </h3>
-            <p className="text-slate-600 text-[13px] font-semibold leading-snug px-2 group-hover:text-slate-700 transition-colors">
-              {dept.description}
-            </p>
-          </button>
-        ))}
+        {visibleDepartments.map((dept) => {
+          // Puxando a cor do departamento para usar no título
+          const theme = getThemeStyles(dept.colorClass);
+
+          return (
+            <button
+              key={dept.id}
+              onClick={() => handleNavigate(dept.id, null)}
+              className="group relative bg-white py-8 px-10 rounded-[32px] border border-slate-100 shadow-[0_10px_40px_rgba(0,0,0,0.03)] transition-all duration-500 text-center animate-in fade-in slide-in-from-bottom-8 flex flex-col items-center hover:-translate-y-3 hover:shadow-[0_20px_50px_rgba(0,0,0,0.08)] overflow-hidden"
+            >
+              {/* Linha superior colorida fixa */}
+              <div className={`absolute top-0 left-0 right-0 h-1.5 ${dept.colorClass}`}></div>
+              
+              {/* CAIXA DO ÍCONE COM EFEITO SHINE (REFLEXO) */}
+              <div className={`relative overflow-hidden w-16 h-16 ${dept.colorClass} text-white rounded-[20px] flex items-center justify-center mb-6 transition-transform duration-500 shadow-md group-hover:shadow-2xl group-hover:scale-110`}>
+                
+                {/* Ícone */}
+                <i className={`fa-solid ${dept.icon} text-2xl relative z-10`}></i>
+                
+                {/* O Reflexo Mágico passando */}
+                <div className="absolute inset-0 -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-[800ms] ease-in-out bg-gradient-to-r from-transparent via-white/60 to-transparent skew-x-12 z-0"></div>
+              </div>
+
+              {/* Título do Departamento que acende na cor correspondente */}
+              <h3 className={`text-xl font-[900] text-slate-800 transition-colors tracking-tight mb-3 ${theme.text}`}>
+                {dept.name}
+              </h3>
+              
+              <p className="text-slate-500 text-[13px] font-medium leading-snug px-2">
+                {dept.description}
+              </p>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -510,11 +555,31 @@ const Dashboard: React.FC = () => {
         
         // --- TELA INICIAL DO DEPARTAMENTO (LAYOUT LIMPO) ---
         <div className="space-y-8 animate-in fade-in duration-700">
-          <div className="flex items-center justify-between pb-4">
-            <h2 className="text-2xl font-black text-slate-800 flex items-center gap-3">
-              <i className={`fa-solid ${currentDeptObj?.icon} text-cyan-500`}></i>
-              {currentDeptObj?.name}
-            </h2>
+          <div className="flex-none flex items-center justify-between pb-4">
+            
+            {/* Agrupamos o Título e o Workspace nesta DIV para ficarem juntos na esquerda */}
+            <div className="flex items-center gap-4">
+              <h2 className="text-2xl font-black text-slate-800 flex items-center gap-3">
+                <i className={`fa-solid ${currentDeptObj?.icon} text-cyan-500`}></i>
+                {currentDeptObj?.name}
+              </h2>
+
+              {/* Botão do Workspace (agora colado no título) */}
+              {currentDeptObj?.workspaceUrl && (
+                <a
+                  href={currentDeptObj.workspaceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Abrir Workspace / Drive do Departamento"
+                  className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 text-slate-500 hover:bg-slate-800 hover:text-white rounded-lg font-bold text-[10px] uppercase tracking-wider transition-all shadow-sm group"
+                >
+                  <i className="fa-brands fa-google-drive text-sm group-hover:scale-110 transition-transform"></i>
+                  Workspace
+                </a>
+              )}
+            </div>
+
+            {/* Botão Voltar (fica na direita sozinho devido ao justify-between lá de cima) */}
             <button
               onClick={() => handleNavigate('home', null)}
               className="px-4 py-2 bg-white border border-slate-200 text-slate-500 rounded-xl hover:bg-slate-50 hover:text-cyan-600 font-bold text-sm transition-all flex items-center gap-2"
@@ -526,22 +591,28 @@ const Dashboard: React.FC = () => {
           {activeDept === 'assistance' ? (
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
                {/* COLUNA 1: BOTÕES DE AÇÃO (8 Colunas) */}
-               <div className="xl:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-                {currentDeptObj?.submodules.map((sub) => (
-                  <button
-                    key={sub.id}
-                    onClick={() => handleNavigate(activeDept, sub.id)}
-                    className="bg-white p-6 rounded-2xl border border-cyan-50 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all text-left group relative overflow-hidden"
-                  >
-                    <div className="w-10 h-10 bg-cyan-500 text-white rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-md">
-                      <i className={`fa-solid ${sub.isTerm ? 'fa-file-signature' : currentDeptObj.icon}`}></i>
-                    </div>
-                    <h3 className="text-base font-black text-slate-800 mb-1">{sub.name}</h3>
-                    <p className="text-[11px] text-slate-500 font-medium">
-                      {sub.isTerm ? 'Emite documento PDF.' : 'Acessar formulário.'}
-                    </p>
-                  </button>
-                ))}
+               <div className="xl:col-span-8">
+                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {currentDeptObj?.submodules.map((sub) => {
+                    // 👇 BUSCA A COR AQUI DENTRO DO MAP 👇
+                    const theme = getThemeStyles(currentDeptObj?.colorClass); 
+
+                    return (
+                      <button
+                        key={sub.id}
+                        onClick={() => handleNavigate(activeDept, sub.id)}
+                        className={`flex items-center gap-4 p-3.5 bg-white border border-slate-200 rounded-xl hover:shadow-md transition-all text-left group ${theme.border} ${theme.bgLight}`}
+                      >
+                        <div className={`w-10 h-10 shrink-0 bg-slate-50 text-slate-400 rounded-lg flex items-center justify-center transition-colors group-hover:text-white ${theme.bgSolid}`}>
+                          <i className={`fa-solid ${sub.isTerm ? 'fa-file-signature' : currentDeptObj?.icon}`}></i>
+                        </div>
+                        <span className={`font-bold text-slate-700 text-sm transition-colors line-clamp-2 ${theme.text}`}>
+                          {sub.name}
+                        </span>
+                      </button>
+                    );
+                  })}
+                 </div>
                </div>
 
                {/* COLUNA 2: LISTA DE ATENDIMENTOS (4 Colunas) */}
@@ -566,25 +637,64 @@ const Dashboard: React.FC = () => {
                </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {currentDeptObj?.submodules.map((sub) => (
-                  <button
-                    key={sub.id}
-                    onClick={() => handleNavigate(activeDept, sub.id)}
-                    className="bg-white p-8 rounded-2xl border border-cyan-50 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all text-left group relative overflow-hidden"
-                  >
-                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                      <i className={`fa-solid ${sub.isTerm ? 'fa-file-signature' : currentDeptObj.icon} text-6xl text-cyan-600`}></i>
-                    </div>
-                    <div className="w-12 h-12 bg-cyan-500 text-white rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-md shadow-cyan-200">
-                      <i className={`fa-solid ${sub.isTerm ? 'fa-file-signature' : currentDeptObj.icon}`}></i>
-                    </div>
-                    <h3 className="text-lg font-black text-slate-800 mb-1 relative z-10">{sub.name}</h3>
-                    <p className="text-xs text-slate-500 font-medium relative z-10">
-                      {sub.isTerm ? 'Emite documento PDF formal.' : 'Gera mensagem formatada para WhatsApp.'}
-                    </p>
-                  </button>
-                ))}
+            // CASO PADRÃO: OUTROS DEPARTAMENTOS
+            <div className="flex flex-col gap-8">
+              
+              {/* 1. RENDERIZA OS SUBMÓDULOS SOLTOS */}
+              {currentDeptObj?.submodules && currentDeptObj.submodules.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {currentDeptObj.submodules.map((sub) => {
+                      const theme = getThemeStyles(currentDeptObj.colorClass); // 👈 Busca a cor do departamento
+
+                      return (
+                        <button
+                          key={sub.id}
+                          onClick={() => handleNavigate(activeDept, sub.id)}
+                          className={`flex items-center gap-4 p-3.5 bg-white border border-slate-200 rounded-xl hover:shadow-md transition-all text-left group ${theme.border} ${theme.bgLight}`}
+                        >
+                          <div className={`w-10 h-10 shrink-0 bg-slate-50 text-slate-400 rounded-lg flex items-center justify-center transition-colors group-hover:text-white ${theme.bgSolid}`}>
+                            <i className={`fa-solid ${sub.isTerm ? 'fa-file-signature' : currentDeptObj.icon}`}></i>
+                          </div>
+                          <span className={`font-bold text-slate-700 text-sm transition-colors line-clamp-2 ${theme.text}`}>
+                            {sub.name}
+                          </span>
+                        </button>
+                      );
+                    })}
+                </div>
+              )}
+
+              {/* 2. RENDERIZA OS GRUPOS / CATEGORIAS */}
+              {currentDeptObj?.groups?.map((group, index) => (
+                <div key={index} className="animate-in fade-in slide-in-from-bottom-4">
+                  <h3 className="text-[11px] font-black text-slate-400 mb-3 uppercase tracking-widest flex items-center gap-2">
+                    <i className="fa-solid fa-folder-open"></i>
+                    {group.title}
+                  </h3>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {group.items.map((sub) => {
+                      const theme = getThemeStyles(currentDeptObj.colorClass); // 👈 Busca a cor do departamento
+
+                      return (
+                        <button
+                          key={sub.id}
+                          onClick={() => handleNavigate(activeDept, sub.id)}
+                          className={`flex items-center gap-4 p-3.5 bg-white border border-slate-200 rounded-xl hover:shadow-md transition-all text-left group ${theme.border} ${theme.bgLight}`}
+                        >
+                          <div className={`w-10 h-10 shrink-0 bg-slate-50 text-slate-400 rounded-lg flex items-center justify-center transition-colors group-hover:text-white ${theme.bgSolid}`}>
+                            <i className={`fa-solid ${sub.isTerm ? 'fa-file-signature' : currentDeptObj.icon}`}></i>
+                          </div>
+                          <span className={`font-bold text-slate-700 text-sm transition-colors line-clamp-2 ${theme.text}`}>
+                            {sub.name}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+
             </div>
           )}
         </div>
@@ -658,6 +768,20 @@ const Dashboard: React.FC = () => {
                     </a>
                   </div>
                 )}
+                {activeSubmodule === 'enviar-associado' && (
+                  <div className="flex justify-end mb-4">
+                    <a 
+                      href="https://www2.correios.com.br/enderecador/encomendas/default.cfm?etq=3&tipo=des#form3" // LINK AQUI
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-4 py-2 bg-amber-50 text-amber-600 hover:bg-amber-100 hover:text-amber-700 rounded-xl font-bold text-xs uppercase tracking-wider transition-colors border border-amber-100 shadow-sm"
+                    >
+                      <i className="fa-solid fa-envelope-open-text text-sm"></i>
+                      Cadastrar AR
+                    </a>
+                  </div>
+                )}
+
                 <FormCard title={activeTemplate ? activeTemplate.title : currentSub?.name || ''} icon={isTerm ? 'fa-file-signature' : 'fa-pen-to-square'}>
                   <form onSubmit={(e) => e.preventDefault()} className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {(activeTemplate ? activeTemplate.fields : (currentSub?.fields || [])).map(field => renderField(field))}
