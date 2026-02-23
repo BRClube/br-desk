@@ -161,14 +161,14 @@ export const TermoAcordoPDF = ({ data }: { data: any }) => {
         </Text>
 
         <Text style={styles.paragraph}>
-          <Text style={styles.bold}>CREDOR(A):</Text> ASSOCIAÇÃO BR CLUBE DE BENEFÍCIOS, pessoa jurídica de direito privado,
+          <Text style={styles.bold}>CREDOR{data.genero === 'feminino' ? 'A' : ''}:</Text> ASSOCIAÇÃO BR CLUBE DE BENEFÍCIOS, pessoa jurídica de direito privado,
           sem fins lucrativos, inscrita no CNPJ nº 40.410.992.0001/40 com sede na Av. Deputado Jamel
           Cecílio, nº 2496, andar 14 sala 141, Jardim Goiás, nesta capital, mentora da Associação Br
           clube de benefícios, sem fins lucrativos.
         </Text>
 
         <Text style={styles.paragraph}>
-          <Text style={styles.bold}>DEVEDOR(A):</Text> {data.nome_devedor}, Brasileira, Portador(a) do RG {data.rg} e do CPF: {data.cpf}, Residente e Domiciliado À {data.endereco}.
+          <Text style={styles.bold}>DEVEDOR{data.genero === 'feminino' ? 'A' : ''}:</Text> {data.nome_devedor}, Brasileira, Portador(a) do RG {data.rg} e do CPF: {data.cpf}, Residente e Domiciliado À {data.endereco}.
         </Text>
 
         <Text style={styles.paragraph}>
@@ -271,7 +271,7 @@ export const TermoCancelamentoPDF = ({data}: {data: any}) => {
         <View style={styles.signatureBlock} wrap={false}>
           <View style={styles.signatureLine} />
           
-          <Text style={styles.bold}>{data.nome_devedor}</Text>
+          <Text style={styles.bold}>{data.associado}</Text>
           <Text style={{ fontSize: 10 }}>CPF: {data.cpf}</Text>
 
           {/* IMAGEM CORRIGIDA */}
@@ -366,7 +366,7 @@ export const TermoAcordoAmparoPDF = ({data}: {data: any}) =>{
             Por este instrumento, a <Text style={styles.bold}>ASSOCIAÇÃO BR CLUBE DE BENEFÍCIOS</Text>, pessoa jurídica
             de direito privado, CNPJ no 40.410.992/0001-40, com sede na Avenida Deputado
             Jamel Cecílio, no 2496, Jardim Goiás, Município de Goiânia, Estado de Goiás, e, de
-            outro lado, o terceiro, <Text style={styles.bold}>{data.terceiro}</Text>, brasileiro, inscrita sob o CPF
+            outro lado, {data.genero === 'feminino' ? 'a' : 'o'} terceir{data.genero === 'feminino' ? 'a' : 'o'}, <Text style={styles.bold}>{data.terceiro}</Text>, brasileir{data.genero === 'feminino' ? 'a' : 'o'}, inscrit{data.genero === 'feminino' ? 'a' : 'o'} sob o CPF
             no {data.cpf}, portador do RG no {data.rg} DGPC GO, ajustam, entre si, o
             seguinte termo de amparo:
         </Text>
@@ -487,7 +487,7 @@ export const TermoRecebimentoRastreadorPDF = ({data }: {data: any }) => {
         {/* Assinatura */}
         <View style={styles.signatureBlock} wrap={false}>
           <View style={styles.signatureLine} />
-          <Text style={{ fontSize: 10 }}>Assinatura do(a) prestador(a)</Text>
+          <Text style={{ fontSize: 10 }}>{data.instalador}</Text>
 
           {/* IMAGEM CORRIGIDA */}
           {/* <Image 
@@ -869,8 +869,8 @@ export const TermoIndenizacaoPecuniaria = ({ data }: { data: any }) => {
         <Text style={styles.paragraph}>
           Por este instrumento, a <Text style={styles.bold}>ASSOCIAÇÃO BR CLUBE DE BENEFÍCIOS</Text>, pessoa jurídica de direito privado,
           CNPJ n° 40.410.992/0001-40, com sede na Avenida Deputado Jamel Cecílio, 2496, Jardim Goiás,
-          Município de Goiânia, Estado de Goiás e, de outro lado, o <Text style={styles.bold}>terceiro, {data.terceiro_nome}</Text>, 
-          {data.terceiro_nacionalidade || 'brasileiro'}, inscrito sob o CPF n° {data.terceiro_cpf}, C.I. n° {data.terceiro_rg}, residente e domiciliado na 
+          Município de Goiânia, Estado de Goiás e, de outro lado, {data.genero === 'feminino' ? 'a' : 'o'} <Text style={styles.bold}>terceir{data.genero === 'feminino' ? 'a' : 'o'}, {data.terceiro_nome}</Text>, 
+          {data.terceiro_nacionalidade || data.genero === 'feminino' ? 'brasileira' : 'brasileiro'}, inscrit{data.genero === 'feminino' ? 'a' : 'o'} sob o CPF n° {data.terceiro_cpf}, C.I. n° {data.terceiro_rg}, residente e domiciliado na 
           {data.terceiro_endereco}, ajustam, entre si, o seguinte termo de amparo:
         </Text>
 
@@ -964,7 +964,7 @@ export const TermoQuitacaoEventoPDF = ({ data }: { data: any }) => {
           TERMO DE QUITAÇÃO DE EVENTO
         </Text>
         <Text style={styles.paragraph}>
-          Responsável pelo veículo: {data.resposavel} {'\n'}
+          Responsável pelo veículo: {data.responsavel} {'\n'}
           CPF/CNPJ: {data.cpf_cnpj} {'\n'}
           Veículo: {data.veiculo} {'\n'}
           Ano: {data.ano} {'\n'}
@@ -994,13 +994,14 @@ export const TermoQuitacaoEventoPDF = ({ data }: { data: any }) => {
           Goiânia, {dt_hoje}.
         </Text>
 
-        <View style={styles.signatureBlock} wrap={false}>
+        {/* Assinatura BR Clube (Com imagem se disponível) */}
+          <View style={styles.signatureBlock} wrap={false}>
             {/* Se tiver a imagem da assinatura da BR Clube salva no projeto: */}
             <Image 
              src={assinatura}
-             style={{ width: 150, height: 'auto', marginTop: 10 }}/>
+             style={{ width: 150, height: 'auto', marginTop: 10, marginBottom: 80}}/>
             <View style={styles.signatureLine} />
-            <Text style={[styles.paragraph, styles.bold]}>ASSINATURA DO ASSOCIADO</Text>
+            <Text style={[styles.paragraph, styles.bold]}>{data.responsavel}</Text>
           </View>
 
       </BaseLayout>

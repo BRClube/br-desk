@@ -207,6 +207,7 @@ export const DEPARTMENTS: Department[] = [
         parentId: 'registration',
         fields: [
           { id: 'associado', label: 'Nome do Associado'},
+          { id: 'genero', label: 'Gênero', type: 'select', options: [{ value: 'masculino', label: 'Masculino' }, { value: 'feminino', label: 'Feminino' }]},
           { id: 'placa', label: 'Placa' },
           { id: 'vencimento', label: 'Dia de vencimento do boleto' },
           { id: 'telefone', label: 'Telefone' },
@@ -214,7 +215,6 @@ export const DEPARTMENTS: Department[] = [
           { id: 'cep', label: 'CEP' },
           { id: 'email', label: 'E-mail', type: 'email' },
           { id: 'forma-pagamento', label: 'Forma de Pagamento', type: 'select', options: [{ value: 'boleto', label: 'Boleto Bancário' }, { value: 'cartao', label: 'Cartão - cobrança recorrente' }]},
-          { id: 'genero', label: 'Gênero', type: 'select', options: [{ value: 'masculino', label: 'Masculino' }, { value: 'feminino', label: 'Feminino' }]}
         ],
         // MANTIVE SUA FUNÇÃO EXISTENTE AQUI
         messageTemplate: (data: any) => {
@@ -236,11 +236,12 @@ export const DEPARTMENTS: Department[] = [
         parentId: 'registration',
         fields: [
           { id: 'associado', label: 'Nome do Associado'},
+          { id: 'genero', label: 'Gênero', type: 'select', options: [{ value: 'masculino', label: 'Masculino' }, { value: 'feminino', label: 'Feminino' }]},
           { id: 'codigo', label: 'Código da bateria' },
           { id: 'marca', label: 'Marca' },
           { id: 'amperagem', label: 'Amperagem' }
         ],
-        messageTemplate: `🚙 ⚡ Seja bem-vindo ao BR Power {{associado}}!\n\nParabéns! Agora, sua proteção está ainda mais completa.\nQuando a vida útil da bateria {{codigo}}, {{marca}}, {{amperagem}} do seu carro chegar ao fim, e ela não segurar mais carga, a BR Clube vai cuidar de tudo.\n\nVocê não vai precisar desembolsar nada a mais no momento da troca.\n\nNossa equipe técnica vai até você, com rapidez e eficiência, para resolver o problema.\n\n💡 Com o BR Power, você protege seu carro e suas finanças.\n\nQualquer dúvida, conte com a gente.\n\n🤝 BR Clube — Proteja do seu jeito. Inspire uma nova era.`
+        messageTemplate: (data: any) => `🚙 ⚡ Seja bem-vind${data.genero === 'feminino' ? 'a' : 'o'} ao BR Power {{associado}}!\n\nParabéns! Agora, sua proteção está ainda mais completa.\nQuando a vida útil da bateria {{codigo}}, {{marca}}, {{amperagem}} do seu carro chegar ao fim, e ela não segurar mais carga, a BR Clube vai cuidar de tudo.\n\nVocê não vai precisar desembolsar nada a mais no momento da troca.\n\nNossa equipe técnica vai até você, com rapidez e eficiência, para resolver o problema.\n\n💡 Com o BR Power, você protege seu carro e suas finanças.\n\nQualquer dúvida, conte com a gente.\n\n🤝 BR Clube — Proteja do seu jeito. Inspire uma nova era.`
       }
     ]
   },
@@ -426,6 +427,7 @@ export const DEPARTMENTS: Department[] = [
         parentId: 'billing',
         fields: [
           { id: 'numero_negociacao', label: 'Número de Negociação', required: true, type: 'number' },
+          { id: 'genero', label: 'Gênero', type: 'select', options: [{ value: 'masculino', label: 'Masculino' }, { value: 'feminino', label: 'Feminino' }]},
           { id: 'nome_devedor', label: 'Nome do Devedor', required: true },
           { id: 'rg', label: 'RG', required: true, type: 'number' },
           { id: 'cpf', label: 'CPF', required: true, type: 'number' },
@@ -695,6 +697,7 @@ export const DEPARTMENTS: Department[] = [
             parentId: 'events',
             fields:[
               { id: 'terceiro', label: 'Nome do Terceiro'},
+              { id: 'genero', label: 'Gênero', type: 'select', options: [{ value: 'masculino', label: 'Masculino' }, { value: 'feminino', label: 'Feminino' }]},
               { id: 'cpf', label: 'CPF do Terceiro'},
               { id: 'rg', label: 'RG do Terceiro'},
               { id: 'data_evento', label: 'Data do Evento', type: 'date'},
@@ -806,6 +809,7 @@ export const DEPARTMENTS: Department[] = [
             parentId: 'financing',
             fields: [
               { id: 'terceiro_nome', label: 'Nome Completo do Terceiro', required: true },
+              { id: 'genero', label: 'Gênero', type: 'select', options: [{ value: 'masculino', label: 'Masculino' }, { value: 'feminino', label: 'Feminino' }]},
               { id: 'terceiro_nacionalidade', label: 'Nacionalidade', placeholder: 'Ex: brasileiro' },
               { id: 'terceiro_cpf', label: 'CPF do Terceiro', required: true },
               { id: 'terceiro_rg', label: 'RG do Terceiro', required: true },

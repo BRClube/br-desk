@@ -532,6 +532,61 @@ interface FormMirrorProps {
   pdfType?: string;
 }
 
+const generateFileName = (pdfType: string, data: any) => {
+  // 1. Iniciais do Termo mapeadas pelo seu constants.ts
+  const termInitials: Record<string, string> = {
+    termo_cancelamento: 'TCP',
+    etiqueta_envio: 'ETQ',
+    termo_acordo: 'TAC',
+    termo_quitacao_evento: 'TQE',
+    termo_pecas: 'TPE',
+    termo_acordo_amparo: 'TAA',
+    termo_indenizacao_pecuniaria: 'TIP',
+    termo_recibo_prestador: 'RPS',
+    termo_recibo_estagio: 'RPE',
+    termo_recibo_transporte: 'RPT',
+    termo_recibo_cheque: 'TEC',
+    termo_recebimento_rastreador: 'TRR'
+  };
+  const prefix = termInitials[pdfType || ''] || 'DOC';
+
+  // 2. Iniciais da Pessoa (Procura em todas as variáveis que você usa como "Nome" nos formulários)
+  const nome = 
+    data.associado || 
+    data.nome_devedor || 
+    data.destinatario || 
+    data.terceiro || 
+    data.terceiro_nome || 
+    data.responsavel || 
+    data.estagiario || 
+    data.prestador || 
+    data.instalador || 
+    data.nome || 
+    'NA';
+
+  const initials = typeof nome === 'string' 
+    ? nome.trim().split(' ').map((n: string) => n[0]).join('').toUpperCase().substring(0, 3)
+    : 'NA';
+
+  // 3. Placa do Veículo (se não tiver placa no formulário, omite esse trecho)
+  let placaStr = '';
+  if (data.placa || data.veiculo_placa) {
+    const placaRaw = data.placa || data.veiculo_placa;
+    placaStr = `-${placaRaw.replace('-', '').toUpperCase()}`;
+  }
+
+  // 4. Data formatada (YYDDMM)
+  const hoje = new Date();
+  const yy = hoje.getFullYear().toString().slice(-2);
+  const dd = String(hoje.getDate()).padStart(2, '0');
+  const mm = String(hoje.getMonth() + 1).padStart(2, '0');
+  const dataFormatada = `${yy}${dd}${mm}`;
+
+  // Resultado final: TAC-JD-ABC1234-262302.pdf ou RPS-MS-262302.pdf (se não tiver placa)
+  return `${prefix}-${initials}${placaStr}-${dataFormatada}.pdf`;
+};
+
+
 export const FormMirror: React.FC<FormMirrorProps> = ({ data, title, generateMessage, isTerm, isBlank, pdfType }) => {
   const [copied, setCopied] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -599,11 +654,15 @@ export const FormMirror: React.FC<FormMirrorProps> = ({ data, title, generateMes
     try {
       const MyDocComponent = getPdfComponent(pdfType, dataToUse);
       if (!MyDocComponent) return;
+      
       const blob = await pdf(MyDocComponent).toBlob();
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${title.replace(/\s+/g, '_')}_${data.associado || 'doc'}.pdf`;
+      
+      // 👇 É AQUI QUE DEFINIMOS O NOVO PADRÃO DE NOME 👇
+      link.download = generateFileName(pdfType || '', dataToUse);
+      
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -647,17 +706,33 @@ export const FormMirror: React.FC<FormMirrorProps> = ({ data, title, generateMes
         </div>
         <div className="mt-8 space-y-3">
           {isTerm && pdfType ? (
-            <button
-              disabled={!hasData || isGenerating}
-              onClick={handleDownloadNewPdf}
-              className="w-full py-3.5 px-4 rounded-xl font-bold text-xs uppercase tracking-widest transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isGenerating ? (
-                <> <i className="fa-solid fa-circle-notch fa-spin"></i> <span>Gerando Arquivo Final...</span> </>
-              ) : (
-                <> <i className="fa-solid fa-file-export"></i> <span>Baixar PDF Assinado</span> </>
+            // 👇 ADICIONADO O FRAGMENTO <> AQUI
+            <>
+              <button
+                disabled={!hasData || isGenerating}
+                onClick={handleDownloadNewPdf}
+                className="w-full py-3.5 px-4 rounded-xl font-bold text-xs uppercase tracking-widest transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isGenerating ? (
+                  <> <i className="fa-solid fa-circle-notch fa-spin"></i> <span>Gerando Arquivo Final...</span> </>
+                ) : (
+                  <> <i className="fa-solid fa-file-export"></i> <span>Baixar PDF Assinado</span> </>
+                )}
+              </button>
+
+              {/* 👇 NOVO BOTÃO: EXCLUSIVO DO TERMO DE CANCELAMENTO 👇 */}
+              {pdfType === 'termo_cancelamento' && (
+                <a
+                  href="https://painel.multi360.com.br/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-3.5 px-4 rounded-xl font-bold text-xs uppercase tracking-widest transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg bg-emerald-500 text-white hover:bg-emerald-600"
+                >
+                  <i className="fa-brands fa-whatsapp text-lg"></i> 
+                  <span>Enviar para o Associado</span>
+                </a>
               )}
-            </button>
+            </>
           ) : (
             <button
               disabled={!hasData}

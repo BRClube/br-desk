@@ -859,12 +859,29 @@ const Dashboard: React.FC = () => {
              apiUrl={GOOGLE_SCRIPT_URL}
              apiToken={API_TOKEN}
            />
-           <ProtocolWidget 
-             currentDepartment={activeDept}
-             userRole={profile?.role || 'user'}
-             apiUrl = {GOOGLE_SCRIPT_URL}
-             apiToken = {API_TOKEN}
-           />
+
+          <ProtocolWidget 
+            currentDepartment={activeDept}
+            userRole={profile?.role || 'user'}
+            apiUrl = {GOOGLE_SCRIPT_URL}
+            apiToken = {API_TOKEN}
+          />
+
+          {/* 👇 BOTÃO SPC - CORREÇÃO DE CENTRALIZAÇÃO 👇 */}
+          {activeDept === 'billing' && (
+            <a 
+              href="https://login.spcbrasil.com.br/realms/associado/protocol/openid-connect/auth?response_type=code&client_id=spcjava&scope=openid+email+profile&redirect_uri=https%3A%2F%2Fsistema.spcbrasil.com.br%2Fspc%2Fopenid_connect_login&nonce=17d1e81083680&state=340d600c0afb7"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="h-10 px-4 flex items-center justify-center gap-2 bg-orange-600 hover:bg-orange-500 text-white rounded-full transition-all duration-300 shadow-sm hover:shadow-orange-200 group"
+            >
+              {/* Texto com leading-none para remover espaços extras de linha da fonte */}
+              <span className="text-[11px] font-black uppercase tracking-wider leading-none">
+                SPC
+              </span>
+            </a>
+          )}
+
          </div>
       )}
 
