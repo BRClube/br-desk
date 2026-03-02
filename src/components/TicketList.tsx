@@ -13,6 +13,8 @@ interface TicketListProps {
   isLoading: boolean;
   onRefresh: () => void;
   currentAttendant: string; // Para mostrar no título
+  onQuickEdit?: (protocolo: string, action: 'abertura' | 'fechamento') => void;
+  onWebhook?: (protocolo: string, tipo: string, dadosExtras?: string, fieldUpdate?: any) => void;
 }
 
 export const TicketList: React.FC<TicketListProps> = ({ tickets, onSelectTicket, isLoading, onRefresh, currentAttendant }) => {

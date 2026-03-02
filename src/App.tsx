@@ -1,19 +1,17 @@
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
-// --- IMPORTAÇÃO CONVENCIONAL (Login é público e leve) ---
 import { Login } from './pages/Login';
-import Layout from '../src/Layout'; // Layout precisa estar disponível para o AdminPage também
+import Layout from './Layout'; // O Layout mestre
 
-// --- LAZY LOADING (O Segredo da Segurança) ---
-// O React só vai baixar esses arquivos (e as URLs dentro deles)
-// DEPOIS que o usuário fizer login e tentar acessar a rota.
-const Dashboard = lazy(() => import('./pages/Dashboard'));
+// Lazy Loading das páginas
+const Home = lazy(() => import('./pages/Home'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
+const Department = lazy(() => import('./pages/Department'));
+const FormView = lazy(() => import('./pages/FormView'));
 
-// Componente de "Carregando..." enquanto baixa o código
 const LoadingScreen = () => (
   <div className="min-h-screen flex items-center justify-center bg-slate-50">
     <div className="text-center">
@@ -31,30 +29,34 @@ const App = () => {
           {/* Rota Pública */}
           <Route path="/login" element={<Login />} />
           
-          {/* Rotas Protegidas (Só acessa se estiver logado) */}
-          
-          {/* Rota de Admin */}
-          <Route path="/admin" element={
+          {/* Rota Protegida Mestra (O Layout envolve TUDO) */}
+          <Route path="/" element={
             <ProtectedRoute>
-               {/* Layout vazio para o AdminPage se ele precisar de estrutura, ou apenas o componente */}
-               <Layout activeDept="home" activeSubmodule={null} onNavigate={() => {}}>
-                  <Suspense fallback={<LoadingScreen />}>
-                    <AdminPage />
-                  </Suspense>
-               </Layout>
+              <Layout />
             </ProtectedRoute>
-          } />
+          }>
+            
+            {/* Se acessar a raiz "/", carrega a página Home */}
+            <Route index element={
+              <Suspense fallback={<LoadingScreen />}><Home /></Suspense>
+            } />
+            
+            <Route path="dept/:deptId" element={<Suspense fallback={<LoadingScreen />}><Department /></Suspense>} />
+            
+            {/* Se aceder a um formulário, carrega a FormView */}
+            <Route path="form/:deptId/:submoduleId" element={
+              <Suspense fallback={<LoadingScreen />}><FormView /></Suspense>
+            } />
+            
+            {/* Rota do Admin */}
+            <Route path="admin" element={
+              <Suspense fallback={<LoadingScreen />}><AdminPage /></Suspense>
+            } />
 
-          {/* Rota Principal (Dashboard) */}
-          <Route path="/*" element={
-            <ProtectedRoute>
-              {/* O Suspense é obrigatório quando usamos lazy() */}
-              <Suspense fallback={<LoadingScreen />}>
-                <Dashboard />
-              </Suspense>
-            </ProtectedRoute>
-          } />
-
+            {/* Redirecionamento de segurança: se digitar uma URL que não existe, volta pra Home */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+            
+          </Route>
         </Routes>
       </AuthProvider>
     </BrowserRouter>

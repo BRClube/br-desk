@@ -59,3 +59,23 @@ export interface FormSubmissionStatus {
   success: boolean | null;
   error: string | null;
 }
+
+export interface PrestadorResultado {
+  origem: 'interno' | 'externo';
+  nome: string;
+  telefone: string;
+  endereco: string;
+  rating?: string | number;
+  lat: number;
+  lng: number;
+  origem_lat: number;
+  origem_lng: number;
+  distancia: number;
+  faturado: boolean;
+  tipo: string;
+  place_id?: string;
+  contato?: string;
+  horario?: string;
+  bairro?: string;
+  obs?: string;
+}
