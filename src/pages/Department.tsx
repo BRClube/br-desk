@@ -6,7 +6,7 @@ import { DEPARTMENTS } from '../constants';
 import { getThemeStyles } from '../utils/theme';
 import { TicketList } from '../components/TicketList';
 import { QuickMessagesWidget, ProtocolWidget } from '../components/QuickMessagesWidget';
-import { AttendanceWidget } from '../components/AttendanceWidget';
+
 
 const GOOGLE_SCRIPT_URL = import.meta.env.VITE_GOOGLE_SCRIPT_URL;
 const API_TOKEN = import.meta.env.VITE_API_TOKEN;
@@ -138,7 +138,6 @@ const Department: React.FC = () => {
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 flex items-center justify-center gap-3 z-50 bg-white/50 backdrop-blur-md p-1.5 rounded-full shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-white/60">
         <QuickMessagesWidget currentDepartment={deptId!} userRole={profile?.role || 'user'} apiUrl={GOOGLE_SCRIPT_URL} apiToken={API_TOKEN} />
         <ProtocolWidget currentDepartment={deptId!} userRole={profile?.role || 'user'} apiUrl={GOOGLE_SCRIPT_URL} apiToken={API_TOKEN} />
-        <AttendanceWidget currentDepartment={deptId!} apiUrl={GOOGLE_SCRIPT_URL} apiToken={API_TOKEN} />
         {deptId === 'billing' && (
           <a href="https://login.spcbrasil.com.br/realms/associado/protocol/openid-connect/auth?response_type=code&client_id=spcjava&scope=openid+email+profile&redirect_uri=https%3A%2F%2Fsistema.spcbrasil.com.br%2Fspc%2Fopenid_connect_login&nonce=17d1e81083680&state=340d600c0afb7" target="_blank" rel="noopener noreferrer" className="h-10 px-4 flex items-center justify-center gap-2 bg-orange-600 hover:bg-orange-500 text-white rounded-full transition-all duration-300 shadow-sm hover:shadow-orange-200 group">
             <span className="text-[11px] font-black uppercase tracking-wider leading-none">SPC</span>

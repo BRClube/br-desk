@@ -7,7 +7,7 @@ import { DepartmentId, Submodule, Template, FormSubmissionStatus, PrestadorResul
 import { formatDateTime } from '../utils/Formatters';
 import { 
   FormCard, FormMirror, Select, RepeaterField, TextArea, Input, 
-  SuccessMessage, ProviderSearch, UploadModal 
+  SuccessMessage, ProviderSearch, UploadModal, SmartSearchInput 
 } from '../components/FormComponents';
 import { TicketList } from '../components/TicketList';
 
@@ -130,17 +130,47 @@ const FormView: React.FC = () => {
 
     setStatus({ submitting: true, success: null, error: null });
 
-    const payload = {
-      ...cleanedFormData,
-      action: 'salvar_ou_atualizar',
-      status: finalStatus, 
-      hora_solicitacao: isClosing ? cleanedFormData.hora_solicitacao : new Date().toLocaleTimeString(),
-      hora_encerramento: (isClosing || finalStatus === 'CANCELADO') ? new Date().toLocaleTimeString() : '',
-      form_id: activeSubmodule,
-      user_email: profile?.email,
-      atendente: profile?.full_name || profile?.email,
-      token_acesso: API_TOKEN
-    };
+    let payload: any;
+
+    if (activeSubmodule === 'service_record') {
+      // 🚨 MODO REGISTRO DE ATENDIMENTO 🚨
+      // Construímos o payload com os exatos nomes de campo que a sua planilha espera.
+      payload = {
+        action: 'salvar_registro_atendimento',
+        protocolo: cleanedFormData.protocolo || '',
+        tipo_registro: cleanedFormData.tipo_registro || '',
+        canal_entrada: cleanedFormData.canal_entrada || '',
+        categoria_demanda: cleanedFormData.categoria_demanda || '',
+        subcategoria: cleanedFormData.subcategoria || '', // Adicionamos a subcategoria
+        relato: cleanedFormData.relato || '',
+        providencia: cleanedFormData.providencia || '',
+        percepcao_satisfacao: cleanedFormData.percepcao_satisfacao || '',
+        pendencias_futuras: cleanedFormData.pendencias_futuras || '',
+        prazo_retorno: cleanedFormData.prazo_retorno || '',
+        motivo_fechamento: cleanedFormData.motivo_fechamento || '',
+        tarefas_spaces: cleanedFormData.tarefas_spaces || '',
+        status: cleanedFormData.status || '',
+        associado: cleanedFormData.associado || '',
+        placa: cleanedFormData.placa || '',
+        // Metadados do sistema
+        atendente: profile?.full_name || profile?.email,
+        departamento: activeDept,
+        token_acesso: API_TOKEN
+      };
+    } else {
+      // 🚑 MODO PADRÃO (Assistência, etc.) 🚑
+      payload = {
+        ...cleanedFormData,
+        action: 'salvar_ou_atualizar',
+        status: finalStatus, 
+        hora_solicitacao: isClosing ? cleanedFormData.hora_solicitacao : new Date().toLocaleTimeString(),
+        hora_encerramento: (isClosing || finalStatus === 'CANCELADO') ? new Date().toLocaleTimeString() : '',
+        form_id: activeSubmodule,
+        user_email: profile?.email,
+        atendente: profile?.full_name || profile?.email,
+        token_acesso: API_TOKEN
+      };
+    }
 
     try {
       const response = await fetch(GOOGLE_SCRIPT_URL, {
@@ -194,6 +224,7 @@ const FormView: React.FC = () => {
   };
 
   const renderField = (field: any) => {
+    // 1. Lógica de visibilidade (showIf)
     if (field.showIf) {
       const watchingValue = formData[field.showIf.field];
       if (Array.isArray(field.showIf.value)) {
@@ -203,11 +234,38 @@ const FormView: React.FC = () => {
       }
     }
 
+    // 2. 👇 O TRUQUE DE MESTRE: Criar uma "key" única para o React não se baralhar com os 8 selects iguais 👇
+    const fieldKey = field.showIf ? `${field.id}-${field.showIf.value}` : field.id;
+
+    // 3. Renderização dos campos
     switch (field.type) {
-      case 'select': return <Select key={field.id} name={field.id} label={field.label} required={field.required} options={field.options || []} value={formData[field.id] || ''} onChange={handleInputChange} />;
-      case 'repeater': return <RepeaterField key={field.id} field={field} value={formData[field.id] || []} onChange={(newArray) => setFormData({ ...formData, [field.id]: newArray })} />;
-      case 'textarea': return <div key={field.id} className="md:col-span-2"><TextArea name={field.id} label={field.label} placeholder={field.placeholder} required={field.required} value={formData[field.id] || ''} onChange={handleInputChange} /></div>;
-      default: return <Input key={field.id} name={field.id} label={field.label} placeholder={field.placeholder} type={field.type || 'text'} required={field.required} value={formData[field.id] || ''} onChange={handleInputChange} />;
+      case 'select': 
+        return <Select key={fieldKey} name={field.id} label={field.label} required={field.required} options={field.options || []} value={formData[field.id] || ''} onChange={handleInputChange} />;
+      
+      case 'repeater': 
+        return <RepeaterField key={fieldKey} field={field} value={formData[field.id] || []} onChange={(newArray) => setFormData({ ...formData, [field.id]: newArray })} />;
+      
+      case 'textarea': 
+        return <div key={fieldKey} className="md:col-span-2"><TextArea name={field.id} label={field.label} placeholder={field.placeholder} required={field.required} value={formData[field.id] || ''} onChange={handleInputChange} /></div>;
+      
+      case 'smart_search':
+        return (
+          <SmartSearchInput 
+            key={fieldKey} 
+            label={field.label} 
+            onSelectDemand={(cat, sub) => {
+              // 👇 CORREÇÃO: Usamos o ID exato 'subcategoria' para bater certo com a sua planilha 👇
+              setFormData(prev => ({ 
+                ...prev, 
+                categoria_demanda: cat, 
+                subcategoria: sub 
+              }));
+            }} 
+          />
+        );
+        
+      default: 
+        return <Input key={fieldKey} name={field.id} label={field.label} placeholder={field.placeholder} type={field.type || 'text'} required={field.required} value={formData[field.id] || ''} onChange={handleInputChange} />;
     }
   };
 
@@ -246,6 +304,37 @@ const FormView: React.FC = () => {
       else alert("Erro na busca: " + (data.msg || "Desconhecido"));
     } catch (error) {
       alert("Erro de conexão ao buscar prestadores.");
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleSmartSearch = async (query: string) => {
+    if (!query) return;
+    setIsSearching(true);
+    try {
+      const response = await fetch(GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: 'buscar_detalhes_protocolo', // Ou uma ação específica para procurar por nome/placa
+          protocolo: query, // Ou o que for enviar (ajuste no backend se for busca por placa/nome)
+          token_acesso: API_TOKEN
+        })
+      });
+      const text = await response.text();
+      const cleanText = text.match(/\{[\s\S]*\}/)?.[0] || text;
+      const data = JSON.parse(cleanText);
+
+      if (data.status === 'sucesso') {
+         // Autopreenchimento: Adicionamos os dados encontrados ao formData atual
+        setFormData(prev => ({ ...prev, ...data.dados }));
+        alert("Dados encontrados e preenchidos!");
+      } else {
+        alert("Atenção: " + data.msg);
+      }
+    } catch (error) {
+      alert("Erro ao buscar dados na planilha.");
     } finally {
       setIsSearching(false);
     }
@@ -363,6 +452,23 @@ const FormView: React.FC = () => {
                     <div className="flex justify-end">
                       <button type="button" onClick={handleClearData} className="w-12 h-10 group flex items-center justify-center rounded-xl font-bold text-xs uppercase tracking-widest transition-all duration-300 bg-slate-100 text-slate-400 hover:bg-red-50 hover:text-red-600" title="Limpar formulário">
                         <i className="fa-solid fa-eraser text-sm"></i>
+                      </button>
+                    </div>
+                  )}
+
+                  {/* 👇 BOTÃO EXCLUSIVO PARA REGISTRO DE ATENDIMENTO 👇 */}
+                  {activeSubmodule === 'service_record' && (
+                    <div className="flex justify-end mt-4">
+                      <button 
+                        type="button" 
+                        onClick={() => handleRegister()} 
+                        disabled={status.submitting} 
+                        className="group flex items-center gap-3 px-8 py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all duration-300 text-white shadow-lg bg-indigo-600 hover:bg-indigo-500 shadow-indigo-500/30"
+                      >
+                        <span>{status.submitting ? 'Salvando...' : 'Registrar Atendimento'}</span>
+                        <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center transition-colors">
+                          <i className="fa-solid fa-check text-xs"></i>
+                        </div>
                       </button>
                     </div>
                   )}

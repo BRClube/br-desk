@@ -253,7 +253,8 @@ export const TermoCancelamentoPDF = ({data}: {data: any}) => {
           
           <Text>Tipo: {data.tipo}</Text>
           <Text>Placa: {data.placa}</Text>
-          <Text>Marca: {data.modelo}</Text>
+          <Text>Marca: {data.marca}</Text>
+          <Text>Modelo: {data.modelo}</Text>
           <Text>Chassi: {data.chassi}</Text>
           <Text>Renavam: {data.renavam}</Text>
           <Text>Cor: {data.cor}</Text>

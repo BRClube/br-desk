@@ -62,7 +62,237 @@ export const USEFUL_LINKS: UsefulLink[] = [
 ];
 
 export const DEPARTMENTS: Department[] = [
-  { 
+  {
+    id: 'service_record',
+    name: 'Registro de Atendimento',
+    icon: 'fa-headset',
+    description: 'Registro formal de interações e demandas',
+    colorClass: 'bg-indigo-600',
+    submodules: [
+      {
+        id: 'service_record',
+        name: 'Registro de atendimento',
+        parentId: 'service_record',
+        fields: [
+          { 
+            id: 'busca_rapida', 
+            label: 'Busca Rápida de Demanda', 
+            type: 'smart_search',
+            required: false
+          },
+          { id: "protocolo",
+            label: "Nº do Protocolo"
+          },
+          { id: "associado",
+            label: "Nome do Associado"
+          },
+          { id: "placa",
+            label: "Placa"
+          },
+          { id: "tipo_registro",
+            label: "Tipo de Registro",
+            type: "select",
+            options: [
+              { value: "receptivo", label: "Receptivo"},
+              { value: "ativo", label: "Ativo"},
+              { value: "registro_ligacao", label: "Registro de Ligação"},
+              { value: "tentativa_contato", label: "Tentativa de Contato"},
+            ]
+          },
+          { id: "canal_entrada",
+            label: "Canal de Entrada",
+            type: "select",
+            options: [
+              { value: "whatsapp", label: "Whatsapp"},
+              { value: "telefone", label: "Telefone"},
+              { value: "email", label: "E-mail"},
+              { value: "presencial", label: "Presencial"},
+            ]
+          },
+          { id: "categoria_demanda",
+            label: "Categoria da Demanda",
+            type: "select",
+            options: [
+              { value: "informacao", label: "Informação"},
+              { value: "segunda_via", label: "Segunda Via do Boleto"},
+              { value: "assistencia", label: "Assistência 24h"},
+              { value: "financeiro", label: "Financeiro"},
+              { value: "cancelamento", label: "Cancelamento"},
+              { value: "reclamacao", label: "Reclamação"},
+              { value: "eventos", label: "Eventos"},
+              { value: "rastreamento", label: "Rastreamento"},
+            ]
+          },
+          {
+            id: "subcategoria",
+            label: "Subcategoria da Demanda",
+            showIf: {field: 'categoria_demanda', value: 'informacao'},
+            type: "select",
+            options: [
+              { value: "contrato", label: "Solicitação de Contrato"},
+              { value: "cobertura", label: "Cobertura Contratada"},
+              { value: "contato", label: "Dúvidas sobre número de contato da BR Clube"},
+              { value: "rateio", label: "Dúvidas sobre rateio"},
+            ]
+          },
+          {
+            id: "subcategoria",
+            label: "Subcategoria da Demanda",
+            showIf: {field: 'categoria_demanda', value: 'segunda_via'},
+            type: "select",
+            options: [
+              { value: "geral", label: "Geral/Outros"}
+            ]
+          },
+          {
+            id: "subcategoria",
+            label: "Subcategoria da Demanda",
+            showIf: {field: 'categoria_demanda', value: 'assistencia'},
+            type: "select",
+            options: [
+              { value: "geral", label: "Geral/Outros"}
+            ]
+          },
+          {
+            id: "subcategoria",
+            label: "Subcategoria da Demanda",
+            showIf: {field: 'categoria_demanda', value: 'financeiro'},
+            type: "select",
+            options: [
+              { value: "valor_errado", label: "Contestação do valor do Boleto"}
+            ]
+          },
+          {
+            id: "subcategoria",
+            label: "Subcategoria da Demanda",
+            showIf: {field: 'categoria_demanda', value: 'cancelamento'},
+            type: "select",
+            options: [
+              { value: "geral", label: "Geral/Outros"}
+            ]
+          },
+          {
+            id: "subcategoria",
+            label: "Subcategoria da Demanda",
+            showIf: {field: 'categoria_demanda', value: 'reclamacao'},
+            type: "select",
+            options: [
+              { value: "demora", label: "Demora no Atendimento"},
+              { value: "rateio", label: "Rateio"},
+              { value: "evento", label: "Evento"}
+            ]
+          },
+          {
+            id: "subcategoria",
+            label: "Subcategoria da Demanda",
+            showIf: {field: 'categoria_demanda', value: 'eventos'},
+            type: "select",
+            options: [
+              { value: "abertura", label: "Abertura de Evento"}
+            ]
+          },
+          {
+            id: "subcategoria",
+            label: "Subcategoria da Demanda",
+            showIf: {field: 'categoria_demanda', value: 'rastreamento'},
+            type: "select",
+            options: [
+              { value: "login", label: "Solicitação de Login"},
+              { value: "fora_do_ar", label: "App fora do ar"}
+            ]
+          },
+          { 
+            id: 'relato', 
+            label: 'Relato', 
+            type: 'textarea', 
+            required: true,
+            placeholder: 'Descreva o que foi solicitado e as ações tomadas...'
+          },
+          { 
+            id: 'providencia', 
+            label: 'Providência', 
+            type: 'textarea', 
+            required: true
+          },
+          { 
+            id: 'percepcao_satisfacao', 
+            label: 'Percepção de Satisfação', 
+            type: 'select', 
+            required: true, 
+            options: [
+              { value: 'Satisfeito', label: '😊 Satisfeito' },
+              { value: 'Satisfeito (Aguarda Retorno)', label: '⏳ Satisfeito (Aguarda Retorno)' },
+              { value: 'Neutro', label: '😐 Neutro' },
+              { value: 'Insatisfeito', label: '🙁 Insatisfeito' },
+              { value: 'Reclamação Formal', label: '😡 Reclamação Formal' }
+            ]
+          },
+          { 
+            id: 'pendencias_futuras', 
+            label: 'Pendências Futuras?', 
+            type: 'select', 
+            required: true, 
+            options: [
+              { value: 'sim', label: 'Sim' },
+              { value: 'nao', label: 'Não' }
+            ]
+          },
+          { 
+            id: 'prazo_retorno', 
+            label: 'Prazo de Retorno', 
+            type: 'datetime-local', 
+            showIf: { field: 'pendencias_futuras', value: 'sim' } 
+          },
+          { 
+            id: 'motivo_fechamento', 
+            label: 'Motivo do Fechamento', 
+            type: 'select', 
+            required: true, 
+            options: [
+              { value: 'Concluído', label: 'Concluído' },
+              { value: 'Encaminhado', label: 'Encaminhado para outro setor' },
+              { value: 'Inatividade do Associado', label: 'Inatividade do Associado' },
+              { value: 'Desistência', label: 'Desistência' }
+            ]
+          },
+          {
+            id: 'tarefas_spaces',
+            label: 'Tarefas geradas no Space?',
+            type: 'select',
+            options: [
+              {value: 'sim', label: 'Sim'},
+              {value: 'nao', label: 'Nao'},
+              {value: 'nao_se_aplica', label: 'Não se Aplica'}
+            ],
+          },
+          {
+            id: 'status',
+            label: 'Status do Atendimento',
+            type: 'select',
+            options:[
+              {value: 'concluido', label: 'Atendimento Concluído'},
+              {value: 'transferido', label: 'Atendimento Transferido'}
+            ]
+          }
+        ],
+        messageTemplate: `🎧 *REGISTRO DE ATENDIMENTO* 🎧
+
+*Protocolo:* {{protocolo}}
+*Associado:* {{associado}} | *Placa:* {{placa}}
+*Tipo:* {{tipo_registro}} | *Canal:* {{canal_entrada}}
+*Categoria:* {{categoria_demanda}}
+
+*Relato / Providências:*
+{{relato}}
+
+*Satisfação:* {{percepcao_satisfacao}}
+*Pendências Futuras:* {{pendencias_futuras}}
+*Prazo de Retorno:* {{prazo_retorno}}
+*Fechamento:* {{motivo_fechamento}}`
+      }
+    ]
+  },
+  {
     id: 'assistance', 
     name: 'Assistência 24H', 
     icon: 'fa-screwdriver-wrench', 
@@ -1332,5 +1562,5 @@ Muito obrigado!
 
 export const DEPARTMENT_TEMPLATES: Record<DepartmentId, Template[]> = {
   home: [], assistance: [], registration: [], tracking: [], events: [], cancellations: [], billing: [], commercial: [], legal: [], financing: [],
-  assistencia: []
+  assistencia: [], service_record: []
 };

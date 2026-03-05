@@ -278,6 +278,125 @@ export const TextArea: React.FC<TextAreaProps> = ({ label, ...props }) => (
   </div>
 );
 
+// ============================================================================
+// COMPONENTE: BUSCA INTELIGENTE DE DEMANDAS
+// ============================================================================
+
+
+interface SmartSearchInputProps {
+  label: string;
+  onSelectDemand: (categoria: string, subcategoria: string) => void;
+}
+
+// Mapeamento dos nomes bonitos das Categorias para aparecer no ecrã
+const catLabels: Record<string, string> = {
+  informacao: 'Informação',
+  financeiro: 'Financeiro',
+  reclamacao: 'Reclamação',
+  eventos: 'Eventos',
+  rastreamento: 'Rastreamento',
+  segunda_via: '2ª Via Boleto',
+  assistencia: 'Assistência 24h',
+  cancelamento: 'Cancelamento'
+};
+
+// Hierarquia com 'value' (o que a planilha/state lê) e 'label' (o que o utilizador vê)
+const demandHierarchy = [
+  { cat: 'informacao', subs: [
+    { value: 'contrato', label: 'Solicitação de contrato' },
+    { value: 'cobertura', label: 'Cobertura contratada' },
+    { value: 'contato', label: 'Dúvidas sobre número de contato da BR Clube' },
+    { value: 'rateio', label: 'Dúvidas sobre rateio' }
+  ]},
+  { cat: 'financeiro', subs: [{ value: 'valor_errado', label: 'Contestação do valor do Boleto' }] },
+  { cat: 'reclamacao', subs: [
+    { value: 'demora', label: 'Demora no Atendimento' },
+    { value: 'rateio', label: 'Rateio' },
+    { value: 'evento', label: 'Evento' }
+  ]},
+  { cat: 'eventos', subs: [{ value: 'abertura', label: 'Abertura de Evento' }] },
+  { cat: 'rastreamento', subs: [
+    { value: 'login', label: 'Solicitação de Login' },
+    { value: 'fora_do_ar', label: 'App fora do ar' }
+  ]},
+  { cat: 'segunda_via', subs: [{ value: 'geral', label: 'Geral/Outros' }] },
+  { cat: 'assistencia', subs: [{ value: 'geral', label: 'Geral/Outros' }] },
+  { cat: 'cancelamento', subs: [{ value: 'geral', label: 'Geral/Outros' }] },
+];
+
+export const SmartSearchInput: React.FC<SmartSearchInputProps> = ({ label, onSelectDemand }) => {
+  const [demandSearch, setDemandSearch] = useState('');
+  const [isFocused, setIsFocused] = useState(false);
+
+  const filteredDemands = demandSearch.length > 1 
+    ? demandHierarchy.flatMap(d => {
+        const catLabel = catLabels[d.cat];
+        const matches = d.subs.filter(s => s.label.toLowerCase().includes(demandSearch.toLowerCase()));
+        const catMatch = catLabel.toLowerCase().includes(demandSearch.toLowerCase());
+        
+        const results: { cat: string, catLabel: string, subValue: string | null, subLabel: string | null }[] = [];
+        
+        if (catMatch) results.push({ cat: d.cat, catLabel, subValue: null, subLabel: null });
+        matches.forEach(m => results.push({ cat: d.cat, catLabel, subValue: m.value, subLabel: m.label }));
+        
+        return results;
+      })
+    : [];
+
+  const handleSelect = (cat: string, catLabel: string, subValue: string | null, subLabel: string | null) => {
+    // 1. Envia os 'values' corretos para preencher os selects
+    onSelectDemand(cat, subValue || '');
+    
+    // 2. Mantém o texto visual bonito na caixa de pesquisa! Ex: "Rateio (Reclamação)"
+    setDemandSearch(subLabel ? `${subLabel} (${catLabel})` : catLabel);
+    
+    setIsFocused(false);
+  };
+
+  return (
+    <div className="space-y-1.5 group relative md:col-span-2 animate-in fade-in zoom-in duration-300">
+      <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1 group-focus-within:text-cyan-600 transition-colors">
+        {label}
+      </label>
+      <div className="relative">
+        <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-cyan-500 transition-colors"></i>
+        <input 
+          type="text"
+          value={demandSearch}
+          onChange={(e) => setDemandSearch(e.target.value)}
+          onFocus={() => {
+             setIsFocused(true);
+             // Limpa ao clicar para permitir nova busca se já tivesse algo
+             if (demandSearch.includes('(')) setDemandSearch(''); 
+          }}
+          onBlur={() => setTimeout(() => setIsFocused(false), 200)} // Delay para o clique registar
+          placeholder="Digite a demanda para preencher automaticamente..."
+          className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-cyan-500/10 focus:border-cyan-500 outline-none transition-all duration-200 text-slate-700 text-sm font-bold placeholder:font-medium placeholder:text-slate-400 shadow-sm"
+        />
+        
+        {/* Caixa de Resultados Flutuante */}
+        {isFocused && filteredDemands.length > 0 && (
+          <div className="absolute z-50 w-full mt-2 bg-white border border-slate-200 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] max-h-56 overflow-y-auto custom-scrollbar overflow-hidden">
+            <div className="px-3 py-2 bg-slate-50 border-b border-slate-100">
+               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Resultados Sugeridos</span>
+            </div>
+            {filteredDemands.map((item, idx) => (
+              <div 
+                key={idx} 
+                onClick={() => handleSelect(item.cat, item.catLabel, item.subValue, item.subLabel)}
+                className="px-4 py-3 hover:bg-cyan-50 cursor-pointer border-b last:border-none border-slate-100 flex flex-col group/item transition-colors"
+              >
+                <span className="font-bold text-slate-700 text-sm group-hover/item:text-cyan-700">{item.subLabel || item.catLabel}</span>
+                <span className="text-[10px] font-black text-cyan-600 uppercase tracking-wider mt-0.5">{item.catLabel}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // --- 4. COMPONENTE REPEATER ---
 interface RepeaterProps { field: any; value: any[]; onChange: (newValue: any[]) => void; }
 export const RepeaterField: React.FC<RepeaterProps> = ({ field, value = [], onChange }) => {
@@ -935,3 +1054,4 @@ export const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, ticke
     </div>
   );
 };
+

@@ -1,11 +1,11 @@
 
-export type DepartmentId = 'home' | 'assistance' | 'registration' | 'tracking' | 'events' | 'cancellations' | 'billing' | 'commercial' | 'legal' | 'financing' | 'assistencia';
+export type DepartmentId = 'home' | 'assistance' | 'registration' | 'tracking' | 'events' | 'cancellations' | 'billing' | 'commercial' | 'legal' | 'financing' | 'assistencia' | 'service_record';
 
 export interface TemplateField {
   id: string;
   label: string;
   placeholder?: string;
-  type?: 'text' | 'date' | 'number' | 'select' | 'time' | 'datetime-local' | 'email' | 'tel' | 'textarea' | 'repeater';
+  type?: 'text' | 'date' | 'number' | 'select' | 'time' | 'datetime-local' | 'email' | 'tel' | 'textarea' | 'repeater' | 'smart_search';
   options?: { value: string; label: string }[];
   subFields?: TemplateField[]; // Usado se o tipo for 'repeater'
   addButtonLabel?: string; // Usado se o tipo for 'repeater'
