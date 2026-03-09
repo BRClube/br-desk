@@ -215,9 +215,34 @@ const FormView: React.FC = () => {
               const webhookUrl = "https://chat.googleapis.com/v1/spaces/AAQA_9VXbIs/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=xYp-47r0nPVdhG8o2MDBdnnhfDDpz-XV78N0OP91oyw";
               
               // Se for edição, manda ícone de lápis. Se for novo, manda satélite.
-              const tituloWebhook = isEditMode ? "📝 *SERVIÇO ATUALIZADO (EDIÇÃO)*" : "🛰️ *NOVO SERVIÇO AGENDADO*";
+              // Se for edição, manda ícone de lápis. Se for novo, manda satélite.
+              const tituloWebhook = isEditMode ? "📝 *SERVIÇO ATUALIZADO (EDIÇÃO)*" : "🛰️ *NOVO SERVIÇO DE RASTREAMENTO*";
               
-              const mensagem = `${tituloWebhook}\n\n*Associado:* ${cleanedFormData.nome || cleanedFormData.associado || 'Não informado'}\n*Placa:* ${cleanedFormData.placa || 'Sem Placa'}\n*Protocolo:* ${cleanedFormData.protocolo || ''}\n*Serviço:* ${(cleanedFormData.tipo_protocolo || '').toUpperCase()}\n*Operador:* ${profile?.full_name || 'Sistema'}`;
+              const mensagem = `${tituloWebhook}
+
+👤 *DADOS DO CLIENTE*
+*Nome:* ${cleanedFormData.nome || cleanedFormData.associado || '-'}
+*CPF/CNPJ:* ${cleanedFormData.cpf_cnpj || '-'}
+*Telefone:* ${cleanedFormData.telefone || '-'}
+*E-mail:* ${cleanedFormData.email || '-'}
+*Endereço:* ${cleanedFormData.endereco || '-'}
+
+🚗 *DADOS DO VEÍCULO*
+*Veículo:* ${cleanedFormData.veiculo || '-'} | *Cor:* ${cleanedFormData.cor || '-'} | *Ano:* ${cleanedFormData.ano || '-'}
+*Placa:* ${cleanedFormData.placa || '-'}
+*Chassi:* ${cleanedFormData.chassi || '-'}
+*Renavam:* ${cleanedFormData.renavam || '-'}
+
+🛰️ *DADOS DO SERVIÇO*
+*Protocolo:* ${cleanedFormData.protocolo || '-'}
+*Serviço:* ${(cleanedFormData.tipo_protocolo || 'Não informado').toUpperCase()}
+*Plataforma:* ${cleanedFormData.plataforma || '-'}
+*IMEI:* ${cleanedFormData.imei || '-'}
+*Data Agendada:* ${cleanedFormData.data_horario ? new Date(cleanedFormData.data_horario).toLocaleString('pt-BR') : '-'}
+*Técnico:* ${cleanedFormData.tecnico || '-'} (${cleanedFormData.telefone_tecnico || '-'})
+*Local Instalado:* ${cleanedFormData.local_instalado || '-'}
+
+👨‍💻 *Operador:* ${profile?.full_name || 'Sistema'}`;
               
               fetch(webhookUrl, {
                 method: 'POST',

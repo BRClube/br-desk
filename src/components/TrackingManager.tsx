@@ -93,6 +93,9 @@ export const TrackingManager: React.FC<TrackingManagerProps> = ({ apiUrl, apiTok
   const handleStatusChange = async (protocolo: string, placa: string, novoStatus: string) => {
     setUpdatingId(protocolo);
     
+    // Puxa todos os dados deste carro específico para mandar no Webhook
+    const order = orders.find(o => o.protocolo === protocolo);
+
     try {
       await fetch(apiUrl, {
         method: 'POST',
@@ -105,7 +108,34 @@ export const TrackingManager: React.FC<TrackingManagerProps> = ({ apiUrl, apiTok
         })
       });
 
-      const mensagem = `🛰️ *ATUALIZAÇÃO DE RASTREADOR*\n\n*Placa:* ${placa}\n*Protocolo:* ${protocolo}\n*Novo Status:* ${novoStatus}\n*Operador:* ${profile?.full_name || 'Sistema'}`;
+      // A Mensagem Completa de Atualização
+      const mensagem = `🔄 *ATUALIZAÇÃO DE STATUS - RASTREAMENTO*
+*Novo Status:* ${novoStatus}
+
+👤 *DADOS DO CLIENTE*
+*Nome:* ${order?.associado || '-'}
+*CPF/CNPJ:* ${order?.cpf_cnpj || '-'}
+*Telefone:* ${order?.telefone || '-'}
+*E-mail:* ${order?.email || '-'}
+*Endereço:* ${order?.endereco || '-'}
+
+🚗 *DADOS DO VEÍCULO*
+*Veículo:* ${order?.veiculo || '-'} | *Cor:* ${order?.cor || '-'} | *Ano:* ${order?.ano || '-'}
+*Placa:* ${placa || '-'}
+*Chassi:* ${order?.chassi || '-'}
+*Renavam:* ${order?.renavam || '-'}
+
+🛰️ *DADOS DO SERVIÇO*
+*Protocolo:* ${protocolo}
+*Serviço:* ${(order?.tipo_protocolo || 'Não informado').toUpperCase()}
+*Plataforma:* ${order?.plataforma || '-'}
+*IMEI:* ${order?.imei || '-'}
+*Data Agendada:* ${order?.data_horario ? new Date(order?.data_horario).toLocaleString('pt-BR') : '-'}
+*Técnico:* ${order?.tecnico || '-'} (${order?.telefone_tecnico || '-'})
+*Local Instalado:* ${order?.local_instalado || '-'}
+
+👨‍💻 *Operador:* ${profile?.full_name || 'Sistema'}`;
+
       await fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -114,7 +144,6 @@ export const TrackingManager: React.FC<TrackingManagerProps> = ({ apiUrl, apiTok
 
       setOrders(prev => prev.map(o => o.protocolo === protocolo ? { ...o, status: novoStatus } : o));
 
-      // Se o modal estiver aberto e formos nós a alterar, atualizamos o modal também
       if (selectedOrder?.protocolo === protocolo) {
           setSelectedOrder(prev => prev ? { ...prev, status: novoStatus } : null);
       }
