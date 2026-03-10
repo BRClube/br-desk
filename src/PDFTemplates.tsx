@@ -1064,3 +1064,50 @@ export const EtiquetaEnvioPDF = ({ data }: { data: any }) => {
     </Document>
   );
 };
+
+
+export const ReciboGenerico = ({data}: { data: any}) => {
+
+  const dt_hoje = formatDate(data.data_hoje);
+
+  return (
+    <Document>
+      <BaseLayout>
+        <Text style={styles.title}>
+          DECLARAÇÃO DE RECEBIMENTO
+        </Text>
+
+        <Text style={styles.paragraph}>
+          Declaro, para os devidos fins, que {data.destinatario}, {data.tipo_pessoa === 'pj' ? 'inscrito no CNPJ sob o n° ' : 'inscrito no CPF sob o n° '}{data.cnpj_cpf} ,recebeu da Associação 
+          BR CLUBE DE BENEFÍCIOS, inscrita no CNPJ sob o n° 40.410.992/0001-40, um 
+          pagamento no valor de R$ {data.valor} ({data.valor_extenso} reais).
+        </Text>
+
+        <Text style={[styles.paragraph, {textAlign: 'left'}]}>
+          Por ser verdade, assino
+        </Text>
+
+        <Text style={[styles.paragraph, { textAlign: 'right', marginTop: 30 }]}>
+          Goiânia, {dt_hoje}.
+        </Text>
+
+        {/* Assinatura */}
+        <View style={styles.signatureBlock} wrap={false}>
+          <View style={styles.signatureLine} />
+          <Text style={styles.paragraph}>{data.destinatario}</Text>
+          
+          <Text style={{ fontSize: 10 }}>{data.prestador}</Text>
+
+          {/* IMAGEM CORRIGIDA */}
+          {/* <Image 
+             src={assinatura}
+             style={{ width: 150, height: 'auto', marginTop: 10 }}     
+          /> */}
+        </View>
+
+      </BaseLayout>
+    </Document>
+  )
+
+
+}

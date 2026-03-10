@@ -1134,6 +1134,24 @@ export const DEPARTMENTS: Department[] = [
       {title: 'Recibos', 
         items: [
           {
+            id: 'recibo_generico',
+            name: 'Recibo Genérico',
+            isTerm: true,
+            pdfType: 'recibo_generico',
+            parentId: 'financing',
+            fields: [
+              { id: 'destinatario', label: 'Destinatário' },
+              { id: 'tipo_pessoa', label: 'Pessoa Física ou Jurídica', type: 'select', options:[
+                { value: 'pj', label: 'Pessoa Jurídica'},
+                { value: 'pf', label: 'Pessoa Física'}
+              ]},
+              { id: 'cnpj_cpf', label: 'CPF/CNPJ', type: 'number'},
+              { id: 'valor', label: 'Valor (R$)', type: 'number'},
+              { id: 'valor_extenso', label: 'Valor por Extenso'},
+              { id: 'data_hoje', label: 'Data de Hoje', type: 'date'}
+            ]
+          },
+          {
             id: 'recibo_prestador',
             name: 'Recibo de Pagamento Prestador de Serviço',
             isTerm: true,
