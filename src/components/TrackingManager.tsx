@@ -26,6 +26,7 @@ export interface TrackingOrder {
   endereco?: string;
   data_horario?: string;
   status: 'Pendente' | 'Agendado' | 'Instalado' | 'Em Manutenção' | 'Desinstalado' | string;
+  nome?: string;
   data_registro?: string;
 }
 
@@ -108,33 +109,52 @@ export const TrackingManager: React.FC<TrackingManagerProps> = ({ apiUrl, apiTok
         })
       });
 
-      // A Mensagem Completa de Atualização
-      const mensagem = `🔄 *ATUALIZAÇÃO DE STATUS - RASTREAMENTO*
-*Novo Status:* ${novoStatus}
+      // --- FORMATAÇÃO DE DATA E HORA ---
+      const dataHorarioRaw = order?.data_horario || '';
+      let dataFormatada = '-';
+      let horaFormatada = '-';
+      
+      if (dataHorarioRaw.includes('T')) {
+          const [dataParte, horaParte] = dataHorarioRaw.split('T');
+          const [ano, mes, dia] = dataParte.split('-');
+          dataFormatada = `${dia}/${mes}/${ano}`;
+          horaFormatada = horaParte.replace(':', 'h');
+      }
 
-👤 *DADOS DO CLIENTE*
-*Nome:* ${order?.associado || '-'}
-*CPF/CNPJ:* ${order?.cpf_cnpj || '-'}
-*Telefone:* ${order?.telefone || '-'}
-*E-mail:* ${order?.email || '-'}
-*Endereço:* ${order?.endereco || '-'}
+      // --- FORMATAÇÃO DE TIPO E PLATAFORMA ---
+      const tipoRaw = String(order?.tipo_protocolo || '').toUpperCase();
+      let tipoServico = 'SERVIÇO';
+      if (tipoRaw.includes('DESINSTAL')) tipoServico = 'DESINSTALAÇÃO';
+      else if (tipoRaw.includes('MANUTEN')) tipoServico = 'MANUTENÇÃO';
+      else if (tipoRaw.includes('INSTAL')) tipoServico = 'INSTALAÇÃO';
 
-🚗 *DADOS DO VEÍCULO*
-*Veículo:* ${order?.veiculo || '-'} | *Cor:* ${order?.cor || '-'} | *Ano:* ${order?.ano || '-'}
-*Placa:* ${placa || '-'}
-*Chassi:* ${order?.chassi || '-'}
-*Renavam:* ${order?.renavam || '-'}
+      const platRaw = String(order?.plataforma || '').toUpperCase();
+      let platFormatada = order?.plataforma || '-';
+      if (platRaw.includes('REDE')) platFormatada = 'Rede Loc';
+      if (platRaw.includes('RASTREIE')) platFormatada = 'Rastreie Brasil';
 
-🛰️ *DADOS DO SERVIÇO*
-*Protocolo:* ${protocolo}
-*Serviço:* ${(order?.tipo_protocolo || 'Não informado').toUpperCase()}
-*Plataforma:* ${order?.plataforma || '-'}
-*IMEI:* ${order?.imei || '-'}
-*Data Agendada:* ${order?.data_horario ? new Date(order?.data_horario).toLocaleString('pt-BR') : '-'}
-*Técnico:* ${order?.tecnico || '-'} (${order?.telefone_tecnico || '-'})
-*Local Instalado:* ${order?.local_instalado || '-'}
+      // 👇 A MENSAGEM EXATAMENTE COMO VOCÊ PEDIU 👇
+      const mensagem = `🔄 *ATUALIZAÇÃO DE STATUS: ${novoStatus}*
+📍 *AGENDAMENTO – ${tipoServico} DE RASTREADOR*
 
-👨‍💻 *Operador:* ${profile?.full_name || 'Sistema'}`;
+Associado: ${order?.nome || order?.associado || '-'}
+Telefone: ${order?.telefone || '-'}
+
+🚗 Veículo: ${order?.veiculo || '-'}
+Placa: ${placa || '-'}
+Cor: ${order?.cor || '-'}
+Ano: ${order?.ano || '-'}
+
+📍 Endereço:
+${order?.endereco || '-'}
+
+📅 Data: ${dataFormatada}
+
+⏰ Horário: ${horaFormatada}
+
+🔧 Técnico: ${order?.tecnico || '-'}
+
+📡 Plataforma: ${platFormatada}`;
 
       await fetch(webhookUrl, {
         method: 'POST',
@@ -305,7 +325,51 @@ export const TrackingManager: React.FC<TrackingManagerProps> = ({ apiUrl, apiTok
                               <div className="flex flex-col text-left">
                                 <button onClick={(e) => {
                                   e.stopPropagation();
-                                  const msg = `🛠️ *ORDEM DE SERVIÇO - ${(order.tipo_protocolo || 'Instalação').toUpperCase()}*\n\n*Cliente:* ${order.associado || '-'}\n*Telefone:* ${order.telefone || '-'}\n*Veículo:* ${order.veiculo || '-'} | *Cor:* ${order.cor || '-'} | *Ano:* ${order.ano || '-'}\n*Placa:* ${order.placa || '-'}\n*Chassi:* ${order.chassi || '-'}\n*Endereço:* ${order.endereco || '-'}\n*Data Agendada:* ${order.data_horario ? new Date(order.data_horario).toLocaleString('pt-BR') : '-'}\n*Equipamento (IMEI):* ${order.imei || '-'}`;
+                                  
+                                  // 1. Formata a Data e Hora (Cortando os milissegundos e segundos)
+                                  let dataF = '-';
+                                  let horaF = '-';
+                                  if (order.data_horario && order.data_horario.includes('T')) {
+                                      const [dP, hP] = order.data_horario.split('T');
+                                      const [ano, mes, dia] = dP.split('-');
+                                      dataF = `${dia}/${mes}/${ano}`;
+                                      horaF = hP.substring(0, 5).replace(':', 'h'); // Corta só os 5 primeiros caracteres e fica "22h29"
+                                  }
+
+                                  // 2. Define o Tipo de Serviço exato
+                                  const tipoRaw = String(order.tipo_protocolo || '').toUpperCase();
+                                  let tipoServico = 'INSTALAÇÃO';
+                                  if (tipoRaw.includes('DESINSTAL')) tipoServico = 'DESINSTALAÇÃO';
+                                  else if (tipoRaw.includes('MANUTEN')) tipoServico = 'MANUTENÇÃO';
+
+                                  // 3. Monta o Local Instalado (Condicional)
+                                  const exibirLocal = order.local_instalado && (tipoServico === 'DESINSTALAÇÃO' || tipoServico === 'MANUTENÇÃO')
+                                      ? `Local Instalado: ${order.local_instalado}\n\n`
+                                      : '';
+
+                                  // 4. Monta a Mensagem Completa
+                                  const msg = `*PROTOCOLO DE AGENDAMENTO PARA ${tipoServico} DE RASTREADOR*
+
+Nome completo: ${order.nome || order.associado || '-'}
+
+Telefone: ${order.telefone || '-'}
+
+*Gênero: * ${order.genero || '-'}
+
+Placa: ${order.placa || '-'}
+
+Modelo: ${order.veiculo || '-'}
+
+Cor: ${order.cor || '-'}
+
+Ano: ${order.ano || '-'}
+
+${exibirLocal}N.º do EMEI: ${order.imei || '-'}
+
+Endereço: ${order.endereco || '-'}
+
+Data: ${dataF} - Horário: ${horaF}`;
+
                                   navigator.clipboard.writeText(msg); 
                                   setCopiedAction('prestador-' + order.protocolo);
                                   setTimeout(() => { setCopiedAction(null); setOpenMenuId(null); }, 1000);
@@ -316,8 +380,80 @@ export const TrackingManager: React.FC<TrackingManagerProps> = ({ apiUrl, apiTok
                                 
                                 <button onClick={(e) => {
                                   e.stopPropagation();
-                                  const msg = `💻 *CADASTRO DE VEÍCULO - ${(order.plataforma || 'Plataforma').toUpperCase()}*\n\n*Cliente:* ${order.associado || '-'}\n*CPF/CNPJ:* ${order.cpf_cnpj || '-'}\n*Veículo:* ${order.veiculo || '-'} | *Cor:* ${order.cor || '-'} | *Ano:* ${order.ano || '-'}\n*Placa:* ${order.placa || '-'}\n*Chassi:* ${order.chassi || '-'}\n*Renavam:* ${order.renavam || '-'}\n*Equipamento (IMEI):* ${order.imei || '-'}`;
-                                  navigator.clipboard.writeText(msg); 
+                                  // 1. Formata a Data e Hora (Cortando milissegundos)
+                                  let dataF = '-';
+                                  let horaF = '-';
+                                  const dataRef = order.data_horario || ''; // Se a sua variável for "order" ou "data", mude aqui!
+
+                                  if (dataRef && dataRef.includes('T')) {
+                                      const [dP, hP] = dataRef.split('T');
+                                      const [ano, mes, dia] = dP.split('-');
+                                      dataF = `${dia}/${mes}/${ano}`;
+                                      horaF = hP.substring(0, 5).replace(':', 'h');
+                                  }
+
+                                  // 2. Formata Data de Nascimento
+                                  let dataNascF = order.data_nasc || '-';
+                                  if (dataNascF.includes('-')) {
+                                      const [anoN, mesN, diaN] = dataNascF.split('-');
+                                      dataNascF = `${diaN}/${mesN}/${anoN}`;
+                                  }
+
+                                  // 3. Define o Tipo de Serviço e Plataforma
+                                  const tipoRaw = String(order.tipo_protocolo || '').toUpperCase();
+                                  let tipoServico = 'INSTALAÇÃO';
+                                  if (tipoRaw.includes('DESINSTAL')) tipoServico = 'DESINSTALAÇÃO';
+                                  else if (tipoRaw.includes('MANUTEN')) tipoServico = 'MANUTENÇÃO';
+
+                                  const platRaw = String(order.plataforma || '').toUpperCase();
+                                  let platFormatada = order.plataforma || '-';
+                                  if (platRaw.includes('REDE')) platFormatada = 'Rede Loc';
+                                  if (platRaw.includes('RASTREIE')) platFormatada = 'Rastreie Brasil';
+
+                                  // 4. Monta o Local Instalado (Condicional)
+                                  const exibirLocal = order.local_instalado && (tipoServico === 'DESINSTALAÇÃO' || tipoServico === 'MANUTENÇÃO')
+                                      ? `Local Instalado: ${order.local_instalado}\n\n`
+                                      : '';
+
+                                  // 5. A Mensagem Completa para a Plataforma
+const msgPlataforma = `💻 *CADASTRO NA PLATAFORMA - ${platFormatada.toUpperCase()}*
+*Serviço:* ${tipoServico}
+*Protocolo:* ${order.protocolo || '-'}
+
+Nome completo: ${order.nome || order.associado || '-'}
+
+CPF/CNPJ: ${order.cpf_cnpj || '-'}
+
+Data de nascimento: ${dataNascF}
+
+E-mail: ${order.email || '-'}
+
+Telefone: ${order.telefone || '-'}
+
+*Gênero: * ${order.genero || '-'}
+
+Placa: ${order.placa || '-'}
+
+Modelo: ${order.veiculo || '-'}
+
+Cor: ${order.cor || '-'}
+
+Ano: ${order.ano || '-'}
+
+Renavam: ${order.renavam || '-'}
+
+Chassi: ${order.chassi || '-'}
+
+${exibirLocal}N.º do EMEI: ${order.imei || '-'}
+
+Técnico: ${order.tecnico || '-'} (${order.telefone_tecnico || '-'})
+
+Técnico Informado: ${String(order.informado || '-').toUpperCase()}
+
+Endereço: ${order.endereco || '-'}
+
+Data: ${dataF} - Horário: ${horaF}`;
+                                  navigator.clipboard.writeText(msgPlataforma); 
                                   setCopiedAction('plataforma-' + order.protocolo);
                                   setTimeout(() => { setCopiedAction(null); setOpenMenuId(null); }, 1000);
                                 }} className="px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-700 border-b border-slate-50 flex items-center gap-2 transition-colors">
@@ -327,7 +463,7 @@ export const TrackingManager: React.FC<TrackingManagerProps> = ({ apiUrl, apiTok
 
                                 <button onClick={(e) => {
                                   e.stopPropagation();
-                                  const msg = `Olá, ${order.associado || '-'}! Tudo bem?\n\nO seu serviço de *${(order.tipo_protocolo || 'Instalação').toUpperCase()}* foi agendado.\n\n📅 *Data/Hora:* ${order.data_horario ? new Date(order.data_horario).toLocaleString('pt-BR') : '-'}\n📍 *Local:* ${order.endereco || '-'}\n👨‍🔧 *Técnico:* ${order.tecnico || '-'}\n\nQualquer dúvida, estamos à disposição!`;
+                                  const msg = `Olá, ${order.associado || '-'}! Tudo bem?\n\nO seu agendamento de *${(order.tipo_protocolo || 'Instalação').toUpperCase()}* de rastreador foi confirmado.\n\n📅 *Data/Hora:* ${order.data_horario ? new Date(order.data_horario).toLocaleString('pt-BR') : '-'}\n📍 *Local:* ${order.endereco || '-'}\n👨‍🔧 *Técnico:* ${order.tecnico || '-'}\n\nQualquer dúvida, estamos à disposição!`;
                                   navigator.clipboard.writeText(msg); 
                                   setCopiedAction('associado-' + order.protocolo);
                                   setTimeout(() => { setCopiedAction(null); setOpenMenuId(null); }, 1000);

@@ -115,6 +115,7 @@ const FormView: React.FC = () => {
     const isClosing = activeSubmodule === 'fechamento_assistencia';
     const cleanedFormData = { ...formData };
     
+    // 👇 As validações usam os dados crus em letras minúsculas (cleanedFormData)
     const isInadimplente = ['inadimplente', 'atrasado', 'cancelado', 'suspenso'].includes(cleanedFormData.adimplencia);
     if (!isInadimplente) {
       cleanedFormData.excepcionalidade = '';
@@ -141,48 +142,80 @@ const FormView: React.FC = () => {
 
     setStatus({ submitting: true, success: null, error: null });
 
+    // =======================================================================
+    // 🔠 FILTRO DE FORMATAÇÃO E TRADUÇÃO PARA A PLANILHA / WEBHOOK
+    // =======================================================================
+    const dicionario: Record<string, string> = {
+      'pneu': 'PNEU FURADO',
+      'bateria': 'PANE ELÉTRICA / BATERIA',
+      'mecanica': 'PANE MECÂNICA',
+      'eletrica': 'PANE ELÉTRICA',
+      'colisao': 'COLISÃO',
+      'chaveiro': 'CHAVEIRO AUTOMOTIVO',
+      'guincho': 'GUINCHO / REBOQUE',
+      'carro': 'CARRO',
+      'moto': 'MOTOCICLETA',
+      'caminhonete': 'CAMINHONETE / SUV',
+      'sim': 'SIM',
+      'nao': 'NÃO'
+      // Adicione aqui qualquer outra abreviação que usar!
+    };
+
+    const camposEmMinusculas = ['email', 'link_nf', 'avatar_url'];
+    const dadosProntosParaSalvar = { ...cleanedFormData };
+
+    Object.keys(dadosProntosParaSalvar).forEach(chave => {
+      if (typeof dadosProntosParaSalvar[chave] === 'string') {
+        let valor = dadosProntosParaSalvar[chave].trim();
+        
+        if (dicionario[valor.toLowerCase()]) {
+          dadosProntosParaSalvar[chave] = dicionario[valor.toLowerCase()];
+        } else if (!camposEmMinusculas.includes(chave) && valor !== '') {
+          dadosProntosParaSalvar[chave] = valor.toUpperCase();
+        }
+      }
+    });
+    // =======================================================================
+
     let payload: any;
 
     if (activeSubmodule === 'service_record') {
       // 🚨 MODO REGISTRO DE ATENDIMENTO 🚨
-      // Construímos o payload com os exatos nomes de campo que a sua planilha espera.
       payload = {
         action: 'salvar_registro_atendimento',
-        protocolo: cleanedFormData.protocolo || '',
-        tipo_registro: cleanedFormData.tipo_registro || '',
-        canal_entrada: cleanedFormData.canal_entrada || '',
-        categoria_demanda: cleanedFormData.categoria_demanda || '',
-        subcategoria: cleanedFormData.subcategoria || '', // Adicionamos a subcategoria
-        relato: cleanedFormData.relato || '',
-        providencia: cleanedFormData.providencia || '',
-        percepcao_satisfacao: cleanedFormData.percepcao_satisfacao || '',
-        pendencias_futuras: cleanedFormData.pendencias_futuras || '',
-        prazo_retorno: cleanedFormData.prazo_retorno || '',
-        motivo_fechamento: cleanedFormData.motivo_fechamento || '',
-        tarefas_spaces: cleanedFormData.tarefas_spaces || '',
-        status: cleanedFormData.status || '',
-        associado: cleanedFormData.associado || '',
-        placa: cleanedFormData.placa || '',
-        // Metadados do sistema
+        protocolo: dadosProntosParaSalvar.protocolo || '',
+        tipo_registro: dadosProntosParaSalvar.tipo_registro || '',
+        canal_entrada: dadosProntosParaSalvar.canal_entrada || '',
+        categoria_demanda: dadosProntosParaSalvar.categoria_demanda || '',
+        subcategoria: dadosProntosParaSalvar.subcategoria || '',
+        relato: dadosProntosParaSalvar.relato || '',
+        providencia: dadosProntosParaSalvar.providencia || '',
+        percepcao_satisfacao: dadosProntosParaSalvar.percepcao_satisfacao || '',
+        pendencias_futuras: dadosProntosParaSalvar.pendencias_futuras || '',
+        prazo_retorno: dadosProntosParaSalvar.prazo_retorno || '',
+        motivo_fechamento: dadosProntosParaSalvar.motivo_fechamento || '',
+        tarefas_spaces: dadosProntosParaSalvar.tarefas_spaces || '',
+        status: dadosProntosParaSalvar.status || '',
+        associado: dadosProntosParaSalvar.associado || '',
+        placa: dadosProntosParaSalvar.placa || '',
         atendente: profile?.full_name || profile?.email,
         departamento: activeDept,
         token_acesso: API_TOKEN
       };
     } else if (activeSubmodule === 'protocolo-instalar-rastreador') { 
-      // 🛰️ MODO RASTREAMENTO (Aponte para o ID do submódulo que contém aqueles fields que me mandou) 🛰️
+      // 🛰️ MODO RASTREAMENTO 🛰️
       payload = {
         action: 'salvar_protocolo_rastreio',
-        ...cleanedFormData,
+        ...dadosProntosParaSalvar,
         token_acesso: API_TOKEN
       };
-    }
-    else {
+    } else {
       // 🚑 MODO PADRÃO (Assistência, etc.) 🚑
       payload = {
-        ...cleanedFormData,
+        ...dadosProntosParaSalvar,
         action: 'salvar_ou_atualizar',
         status: finalStatus, 
-        hora_solicitacao: isClosing ? cleanedFormData.hora_solicitacao : new Date().toLocaleTimeString(),
+        hora_solicitacao: isClosing ? dadosProntosParaSalvar.hora_solicitacao : new Date().toLocaleTimeString(),
         hora_encerramento: (isClosing || finalStatus === 'CANCELADO') ? new Date().toLocaleTimeString() : '',
         form_id: activeSubmodule,
         user_email: profile?.email,
@@ -214,35 +247,55 @@ const FormView: React.FC = () => {
           if (activeSubmodule === 'protocolo-instalar-rastreador') { 
               const webhookUrl = "https://chat.googleapis.com/v1/spaces/AAQA_9VXbIs/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=xYp-47r0nPVdhG8o2MDBdnnhfDDpz-XV78N0OP91oyw";
               
-              // Se for edição, manda ícone de lápis. Se for novo, manda satélite.
-              // Se for edição, manda ícone de lápis. Se for novo, manda satélite.
-              const tituloWebhook = isEditMode ? "📝 *SERVIÇO ATUALIZADO (EDIÇÃO)*" : "🛰️ *NOVO SERVIÇO DE RASTREAMENTO*";
               
+            // --- FORMATAÇÃO DE DATA E HORA ---
+              const dataHorarioRaw = dadosProntosParaSalvar.data_horario || '';
+              let dataFormatada = '-';
+              let horaFormatada = '-';
+              
+              if (dataHorarioRaw.includes('T')) {
+                  const [dataParte, horaParte] = dataHorarioRaw.split('T');
+                  const [ano, mes, dia] = dataParte.split('-');
+                  dataFormatada = `${dia}/${mes}/${ano}`;
+                  horaFormatada = horaParte.replace(':', 'h'); // Transforma 08:00 em 08h00
+              }
+
+              // --- FORMATAÇÃO DE TIPO E PLATAFORMA ---
+              const tipoRaw = String(dadosProntosParaSalvar.tipo_protocolo || '').toUpperCase();
+              let tipoServico = 'SERVIÇO';
+              if (tipoRaw.includes('DESINSTAL')) tipoServico = 'DESINSTALAÇÃO';
+              else if (tipoRaw.includes('MANUTEN')) tipoServico = 'MANUTENÇÃO';
+              else if (tipoRaw.includes('INSTAL')) tipoServico = 'INSTALAÇÃO';
+
+              const platRaw = String(dadosProntosParaSalvar.plataforma || '').toUpperCase();
+              let platFormatada = dadosProntosParaSalvar.plataforma || '-';
+              if (platRaw.includes('REDE')) platFormatada = 'Rede Loc';
+              if (platRaw.includes('RASTREIE')) platFormatada = 'Rastreie Brasil';
+
+              const iconeTitulo = isEditMode ? "📝" : "📍";
+              const tituloWebhook = `${iconeTitulo} *AGENDAMENTO – ${tipoServico} DE RASTREADOR*`;
+
+              // 👇 A MENSAGEM EXATAMENTE COMO VOCÊ PEDIU 👇
               const mensagem = `${tituloWebhook}
 
-👤 *DADOS DO CLIENTE*
-*Nome:* ${cleanedFormData.nome || cleanedFormData.associado || '-'}
-*CPF/CNPJ:* ${cleanedFormData.cpf_cnpj || '-'}
-*Telefone:* ${cleanedFormData.telefone || '-'}
-*E-mail:* ${cleanedFormData.email || '-'}
-*Endereço:* ${cleanedFormData.endereco || '-'}
+Associado: ${dadosProntosParaSalvar.nome || dadosProntosParaSalvar.associado || '-'}
+Telefone: ${dadosProntosParaSalvar.telefone || '-'}
 
-🚗 *DADOS DO VEÍCULO*
-*Veículo:* ${cleanedFormData.veiculo || '-'} | *Cor:* ${cleanedFormData.cor || '-'} | *Ano:* ${cleanedFormData.ano || '-'}
-*Placa:* ${cleanedFormData.placa || '-'}
-*Chassi:* ${cleanedFormData.chassi || '-'}
-*Renavam:* ${cleanedFormData.renavam || '-'}
+🚗 Veículo: ${dadosProntosParaSalvar.veiculo || '-'}
+Placa: ${dadosProntosParaSalvar.placa || '-'}
+Cor: ${dadosProntosParaSalvar.cor || '-'}
+Ano: ${dadosProntosParaSalvar.ano || '-'}
 
-🛰️ *DADOS DO SERVIÇO*
-*Protocolo:* ${cleanedFormData.protocolo || '-'}
-*Serviço:* ${(cleanedFormData.tipo_protocolo || 'Não informado').toUpperCase()}
-*Plataforma:* ${cleanedFormData.plataforma || '-'}
-*IMEI:* ${cleanedFormData.imei || '-'}
-*Data Agendada:* ${cleanedFormData.data_horario ? new Date(cleanedFormData.data_horario).toLocaleString('pt-BR') : '-'}
-*Técnico:* ${cleanedFormData.tecnico || '-'} (${cleanedFormData.telefone_tecnico || '-'})
-*Local Instalado:* ${cleanedFormData.local_instalado || '-'}
+📍 Endereço:
+${dadosProntosParaSalvar.endereco || '-'}
 
-👨‍💻 *Operador:* ${profile?.full_name || 'Sistema'}`;
+📅 Data: ${dataFormatada}
+
+⏰ Horário: ${horaFormatada}
+
+🔧 Técnico: ${dadosProntosParaSalvar.tecnico || '-'}
+
+📡 Plataforma: ${platFormatada}`;
               
               fetch(webhookUrl, {
                 method: 'POST',
@@ -250,7 +303,6 @@ const FormView: React.FC = () => {
                 body: JSON.stringify({ text: mensagem })
               }).catch(err => console.error("Erro ao enviar webhook:", err));
               
-              // Desativa o modo de edição após salvar
               setIsEditMode(false);
           }
 
@@ -591,8 +643,52 @@ const FormView: React.FC = () => {
                    
                    {/* 1. MENSAGEM PRESTADOR */}
                    <button type="button" onClick={() => {
-                     const msg = `🛠️ *ORDEM DE SERVIÇO - ${(formData.tipo_protocolo || 'Instalação').toUpperCase()}*\n\n*Cliente:* ${formData.nome || formData.associado || '-'}\n*Telefone:* ${formData.telefone || '-'}\n*Veículo:* ${formData.veiculo || '-'} | *Cor:* ${formData.cor || '-'} | *Ano:* ${formData.ano || '-'}\n*Placa:* ${formData.placa || '-'}\n*Chassi:* ${formData.chassi || '-'}\n*Endereço:* ${formData.endereco || '-'}\n*Data Agendada:* ${formData.data_horario ? new Date(formData.data_horario).toLocaleString('pt-BR') : '-'}\n*Equipamento (IMEI):* ${formData.imei || '-'}`;
-                     navigator.clipboard.writeText(msg); 
+                     // 1. Formata a Data e Hora (Cortando milissegundos)
+                    let dataF = '-';
+                    let horaF = '-';
+                    const dataRef = formData.data_horario || ''; // Se a sua variável não for formData, troque aqui!
+
+                    if (dataRef && dataRef.includes('T')) {
+                        const [dP, hP] = dataRef.split('T');
+                        const [ano, mes, dia] = dP.split('-');
+                        dataF = `${dia}/${mes}/${ano}`;
+                        horaF = hP.substring(0, 5).replace(':', 'h');
+                    }
+
+                    // 2. Define o Tipo de Serviço
+                    const tipoRaw = String(formData.tipo_protocolo || '').toUpperCase();
+                    let tipoServico = 'INSTALAÇÃO';
+                    if (tipoRaw.includes('DESINSTAL')) tipoServico = 'DESINSTALAÇÃO';
+                    else if (tipoRaw.includes('MANUTEN')) tipoServico = 'MANUTENÇÃO';
+
+                    // 3. Monta o Local Instalado (Condicional)
+                    const exibirLocal = formData.local_instalado && (tipoServico === 'DESINSTALAÇÃO' || tipoServico === 'MANUTENÇÃO')
+                        ? `Local Instalado: ${formData.local_instalado}\n\n`
+                        : '';
+
+                    // 4. A Mensagem Perfeita
+const msgTecnico = `*PROTOCOLO DE AGENDAMENTO PARA ${tipoServico} DE RASTREADOR*
+
+Nome completo: ${formData.nome || formData.associado || '-'}
+
+Telefone: ${formData.telefone || '-'}
+
+*Gênero: * ${formData.genero || '-'}
+
+Placa: ${formData.placa || '-'}
+
+Modelo: ${formData.veiculo || '-'}
+
+Cor: ${formData.cor || '-'}
+
+Ano: ${formData.ano || '-'}
+
+${exibirLocal}N.º do EMEI: ${formData.imei || '-'}
+
+Endereço: ${formData.endereco || '-'}
+
+Data: ${dataF} - Horário: ${horaF}`;
+                     navigator.clipboard.writeText(msgTecnico); 
                      setCopiedAction('prestador'); setTimeout(() => setCopiedAction(null), 2000);
                    }} className="flex items-center justify-between p-3 bg-slate-50 hover:bg-teal-50 border border-slate-100 hover:border-teal-200 rounded-xl transition-all text-left group">
                       <div>
@@ -604,8 +700,80 @@ const FormView: React.FC = () => {
 
                    {/* 2. MENSAGEM PLATAFORMA */}
                    <button type="button" onClick={() => {
-                     const msg = `💻 *CADASTRO DE VEÍCULO - ${(formData.plataforma || 'Plataforma').toUpperCase()}*\n\n*Cliente:* ${formData.nome || formData.associado || '-'}\n*CPF/CNPJ:* ${formData.cpf_cnpj || '-'}\n*Veículo:* ${formData.veiculo || '-'} | *Cor:* ${formData.cor || '-'} | *Ano:* ${formData.ano || '-'}\n*Placa:* ${formData.placa || '-'}\n*Chassi:* ${formData.chassi || '-'}\n*Renavam:* ${formData.renavam || '-'}\n*Equipamento (IMEI):* ${formData.imei || '-'}`;
-                     navigator.clipboard.writeText(msg); 
+                     // 1. Formata a Data e Hora (Cortando milissegundos)
+                      let dataF = '-';
+                      let horaF = '-';
+                      const dataRef = formData.data_horario || ''; // Se a sua variável for "order" ou "data", mude aqui!
+
+                      if (dataRef && dataRef.includes('T')) {
+                          const [dP, hP] = dataRef.split('T');
+                          const [ano, mes, dia] = dP.split('-');
+                          dataF = `${dia}/${mes}/${ano}`;
+                          horaF = hP.substring(0, 5).replace(':', 'h');
+                      }
+
+                      // 2. Formata Data de Nascimento
+                      let dataNascF = formData.data_nasc || '-';
+                      if (dataNascF.includes('-')) {
+                          const [anoN, mesN, diaN] = dataNascF.split('-');
+                          dataNascF = `${diaN}/${mesN}/${anoN}`;
+                      }
+
+                      // 3. Define o Tipo de Serviço e Plataforma
+                      const tipoRaw = String(formData.tipo_protocolo || '').toUpperCase();
+                      let tipoServico = 'INSTALAÇÃO';
+                      if (tipoRaw.includes('DESINSTAL')) tipoServico = 'DESINSTALAÇÃO';
+                      else if (tipoRaw.includes('MANUTEN')) tipoServico = 'MANUTENÇÃO';
+
+                      const platRaw = String(formData.plataforma || '').toUpperCase();
+                      let platFormatada = formData.plataforma || '-';
+                      if (platRaw.includes('REDE')) platFormatada = 'Rede Loc';
+                      if (platRaw.includes('RASTREIE')) platFormatada = 'Rastreie Brasil';
+
+                      // 4. Monta o Local Instalado (Condicional)
+                      const exibirLocal = formData.local_instalado && (tipoServico === 'DESINSTALAÇÃO' || tipoServico === 'MANUTENÇÃO')
+                          ? `Local Instalado: ${formData.local_instalado}\n\n`
+                          : '';
+
+                      // 5. A Mensagem Completa para a Plataforma
+const msgPlataforma = `💻 *CADASTRO NA PLATAFORMA - ${platFormatada.toUpperCase()}*
+*Serviço:* ${tipoServico}
+*Protocolo:* ${formData.protocolo || '-'}
+
+Nome completo: ${formData.nome || formData.associado || '-'}
+
+CPF/CNPJ: ${formData.cpf_cnpj || '-'}
+
+Data de nascimento: ${dataNascF}
+
+E-mail: ${formData.email || '-'}
+
+Telefone: ${formData.telefone || '-'}
+
+*Gênero: * ${formData.genero || '-'}
+
+Placa: ${formData.placa || '-'}
+
+Modelo: ${formData.veiculo || '-'}
+
+Cor: ${formData.cor || '-'}
+
+Ano: ${formData.ano || '-'}
+
+Renavam: ${formData.renavam || '-'}
+
+Chassi: ${formData.chassi || '-'}
+
+${exibirLocal}N.º do EMEI: ${formData.imei || '-'}
+
+Técnico: ${formData.tecnico || '-'} (${formData.telefone_tecnico || '-'})
+
+Técnico Informado: ${String(formData.informado || '-').toUpperCase()}
+
+Endereço: ${formData.endereco || '-'}
+
+Data: ${dataF} - Horário: ${horaF}`;
+                     navigator.clipboard.writeText(msgPlataforma); 
                      setCopiedAction('plataforma'); setTimeout(() => setCopiedAction(null), 2000);
                    }} className="flex items-center justify-between p-3 bg-slate-50 hover:bg-blue-50 border border-slate-100 hover:border-blue-200 rounded-xl transition-all text-left group">
                       <div>
@@ -617,7 +785,7 @@ const FormView: React.FC = () => {
 
                    {/* 3. MENSAGEM ASSOCIADO */}
                    <button type="button" onClick={() => {
-                     const msg = `Olá, ${formData.nome || formData.associado || '-'}! Tudo bem?\n\nO seu serviço de *${(formData.tipo_protocolo || 'Instalação').toUpperCase()}* foi agendado.\n\n📅 *Data/Hora:* ${formData.data_horario ? new Date(formData.data_horario).toLocaleString('pt-BR') : '-'}\n📍 *Local:* ${formData.endereco || '-'}\n👨‍🔧 *Técnico:* ${formData.tecnico || '-'}\n\nQualquer dúvida, estamos à disposição!`;
+                     const msg = `Olá, ${formData.nome || formData.associado || '-'}! Tudo bem?\n\nO seu agendamento de *${(formData.tipo_protocolo || 'Instalação').toUpperCase()}* de rastreador foi confirmado.\n\n📅 *Data/Hora:* ${formData.data_horario ? new Date(formData.data_horario).toLocaleString('pt-BR') : '-'}\n📍 *Local:* ${formData.endereco || '-'}\n👨‍🔧 *Técnico:* ${formData.tecnico || '-'}\n\nQualquer dúvida, estamos à disposição!`;
                      navigator.clipboard.writeText(msg); 
                      setCopiedAction('associado'); setTimeout(() => setCopiedAction(null), 2000);
                    }} className="flex items-center justify-between p-3 bg-slate-50 hover:bg-emerald-50 border border-slate-100 hover:border-emerald-200 rounded-xl transition-all text-left group">
